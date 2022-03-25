@@ -1,11 +1,11 @@
 {
   "terminal.integrated.env.linux": {
-    "PYTHONPATH": "/workspaces/anycubic-python/src"
+    "PYTHONPATH": "/workspaces/anycubic-python/custom_components/anycubic_wifi"
   },
   "python.analysis.logLevel": "Trace",
   "python.analysis.watchSearchPaths": true,
   "python.defaultInterpreterPath": "/usr/local/bin/python3",
-  "python.autoComplete.extraPaths": ["/workspaces/anycubic-python/src"],
+  "python.autoComplete.extraPaths": ["/workspaces/anycubic-python/custom_components/anycubic_wifi"],
   "cSpell.words": [
     "adamoutler",
     "gopause",

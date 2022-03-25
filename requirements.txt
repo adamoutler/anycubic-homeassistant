@@ -1,2 +1,2 @@
-Pillow
-build
+homeassistant
+uart-wifi
