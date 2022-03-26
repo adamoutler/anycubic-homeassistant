@@ -5,11 +5,34 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "args": ["--debug"],
       "name": "run hass",
+      "args": ["--debug"],
       "type": "python",
       "request": "launch",
       "program": "/usr/local/bin/hass",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Start Fake Printer",
+      "type": "python",
+      "request": "launch",
+      "program": "/home/vscode/.local/bin/fake_printer.py",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Start print",
+      "type": "python",
+      "request": "launch",
+      "program": "/home/vscode/.local/bin/monox.py",
+      "args": ["-i", "127.0.0.1", "-c", "goprint,1.pwmb,end"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Stop print",
+      "type": "python",
+      "request": "launch",
+      "program": "/home/vscode/.local/bin/monox.py",
+      "args": ["-i", "127.0.0.1", "-c", "gostop,end"],
       "console": "integratedTerminal"
     }
   ]
