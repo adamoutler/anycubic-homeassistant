@@ -16,14 +16,14 @@
       "name": "Start Fake Printer",
       "type": "python",
       "request": "launch",
-      "program": "/home/vscode/.local/bin/fake_printer.py",
+      "program": "/usr/local/bin/fake_printer.py",
       "console": "integratedTerminal"
     },
     {
       "name": "Start print",
       "type": "python",
       "request": "launch",
-      "program": "/home/vscode/.local/bin/monox.py",
+      "program": "/usr/local/bin/monox.py",
       "args": ["-i", "127.0.0.1", "-c", "goprint,1.pwmb,end"],
       "console": "integratedTerminal"
     },
@@ -31,7 +31,7 @@
       "name": "Stop print",
       "type": "python",
       "request": "launch",
-      "program": "/home/vscode/.local/bin/monox.py",
+      "program": "/usr/local/bin/monox.py",
       "args": ["-i", "127.0.0.1", "-c", "gostop,end"],
       "console": "integratedTerminal"
     }
