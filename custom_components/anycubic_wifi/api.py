@@ -23,34 +23,21 @@ class MonoXAPI(UartWifi):
         self.ip_address = the_ip
         self.port = port
 
-    async def getstatus(self) -> MonoXStatus | None:
+    def getstatus(self) -> MonoXStatus | None:
         """Get the MonoX Status"""
         try:
-            response = self.send_request("getstatus\r\n")
-            return pick_item_from_response(response, MonoXStatus)
+            return self.send_request("getstatus,\r\n")
         except OSError:
             raise AnycubicMonoXAPILevel from OSError
 
-    async def sysinfo(self) -> MonoXSysInfo | None:
+    def sysinfo(self) -> MonoXSysInfo | None:
         """Get the MonoX Status"""
         try:
-            response = self.send_request("sysinfo\r\n")
-            return pick_item_from_response(response, MonoXSysInfo)
+            return self.send_request("sysinfo,\r\n")
+
         except OSError:
             raise AnycubicMonoXAPILevel from OSError
 
-
-def pick_item_from_response(
-    response: list(MonoXResponseType), response_type: MonoXResponseType
-) -> MonoXResponseType | None:
-    """Select the expected type from the list
-    :param response: the response list
-    :param type: The type of expected response
-    """
-    for item in response:
-        if isinstance(item, response_type):
-            return item
-    return None
 
 
 def get_split(the_ip: str, port) -> tuple[str, int]:

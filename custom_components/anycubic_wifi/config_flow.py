@@ -5,21 +5,18 @@ import asyncio
 import logging
 from typing import Any
 import voluptuous as vol
-
-from .api import MonoXAPI
-
-from .device import AnycubicUartWifiDevice
-from uart_wifi.response import MonoXResponseType
-from .monox_updater import get_monox_info
-
-
 from homeassistant import config_entries
 from homeassistant.components import dhcp
 from homeassistant.const import (
     CONF_HOST,
 )
-
 from homeassistant.data_entry_flow import FlowResult
+from uart_wifi.response import MonoXResponseType
+
+from .device import AnycubicUartWifiDevice
+from .monox_updater import get_monox_info
+from .api import MonoXAPI
+
 
 from .errors import CannotConnect
 from .const import (
@@ -120,17 +117,17 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_user()
 
 
-def get_anycubic_device(hass, ip) -> AnycubicUartWifiDevice | None:
+def get_anycubic_device(hass, the_ip) -> AnycubicUartWifiDevice | None:
     """Create an Anycubic device."""
 
-    device = AnycubicUartWifiDevice(hass, {CONF_HOST: ip})
+    device = AnycubicUartWifiDevice(hass, {CONF_HOST: the_ip})
 
     try:
         return (
             device
-            if isinstance(MonoXAPI(ip, UART_WIFI_PORT).sysinfo(), MonoXResponseType)
+            if isinstance(MonoXAPI(the_ip, UART_WIFI_PORT).sysinfo(), MonoXResponseType)
             else None
         )
     except (asyncio.TimeoutError) as err:
-        LOGGER.error("Error connecting to the 3D Printer device at %s", ip)
+        LOGGER.error("Error connecting to the 3D Printer device at %s", the_ip)
         raise CannotConnect from err

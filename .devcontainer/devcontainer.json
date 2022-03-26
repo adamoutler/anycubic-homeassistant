@@ -6,15 +6,10 @@
     "dockerfile": "Dockerfile",
     "context": "..",
     "args": {
-      // Update 'VARIANT' to pick a Python version: 3, 3.10, 3.9, 3.8, 3.7, 3.6
-      // Append -bullseye or -buster to pin to an OS version.
-      // Use -bullseye variants on local on arm64/Apple Silicon.
       "VARIANT": "3.9-bullseye",
-      // Options
       "NODE_VERSION": "lts/*"
     }
   },
-  "postCreateCommand": "pip3 install -r requirements.txt;",
   // Set *default* container specific settings.json values on container create.
   "settings": {
     "python.defaultInterpreterPath": "/usr/local/bin/python",
@@ -47,7 +42,6 @@
   "extensions": [
     "ms-python.vscode-pylance",
     "visualstudioexptteam.vscodeintellicode",
-    "redhat.vscode-yaml",
     "esbenp.prettier-vscode",
     "xirider.livecode"
   ],
@@ -61,10 +55,10 @@
     "MY_REMOTE_VARIABLE2": "${localEnv:SOME_LOCAL_VAR}"
   },
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  "forwardPorts": [6000],
-  // Use 'postCreateCommand' to run commands after the container is created.
-  // "postCreateCommand": "pip3 install --user -r requirements.txt",
-  // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+  "forwardPorts": [],
+  // We have a special folder in our environment which is gitignored and handles all config.
+  // Link our settings into the container and place our code into the custom components.
+  "postCreateCommand": "rm -Rf /home/vscode/.homeassistant;ln -s /workspaces/anycubic-homeassistant/.homeassistant /home/vscode/.homeassistant;ln -s /workspaces/anycubic-homeassistant/custom_components  /workspaces/anycubic-homeassistant/.homeassistant/||echo already linked",
   "remoteUser": "vscode",
   "features": {
     "git": "latest"

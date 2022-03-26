@@ -1,4 +1,5 @@
 """Utility class to update mono x configuration"""
+import asyncio
 from .api import MonoXAPI
 from .const import (
     CONF_MODEL,
@@ -14,6 +15,7 @@ def get_monox_info(host: str, data: dict, port: int = 6000) -> None:
     """Gather information from the device, given the IP address"""
     api = MonoXAPI(host, UART_WIFI_PORT)
     sysinfo = api.sysinfo()
+
     if isinstance(sysinfo, MonoXSysInfo):
         data[CONF_HOST] = host
         map_sysinfo_to_data(sysinfo, data)
