@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from uart_wifi.communication import UartWifi
-from uart_wifi.response import MonoXResponseType, MonoXStatus, MonoXSysInfo
+from uart_wifi.response import MonoXStatus, MonoXSysInfo
 from .errors import AnycubicMonoXAPILevel
 from .const import UART_WIFI_PORT
 
