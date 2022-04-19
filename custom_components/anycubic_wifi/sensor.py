@@ -1,32 +1,31 @@
 """Platform for sensor integration."""
 from __future__ import annotations
-from curses import has_key
 from datetime import timedelta
 import datetime
 from typing import Any
+import logging
 
-from .api import MonoXAPI
-from .base_entry import AnycubicUartEntityBase
+
 from uart_wifi.response import MonoXStatus
 from homeassistant import config_entries
-
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_UNIQUE_ID, DEVICE_CLASS_TEMPERATURE
+from homeassistant.const import CONF_HOST, CONF_UNIQUE_ID
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from uart_wifi.errors import AnycubicException
+from .api import MonoXAPI
+from .base_entry import AnycubicUartEntityBase
 from .const import (
     CONF_MODEL,
     CONF_SERIAL,
-    DEFAULT_STATE,
     DOMAIN,
     PRINTER_ICON,
     UART_WIFI_PORT,
 )
-import logging
 
-
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 _LOGGER = logging.getLogger(__name__)
 _ATTR_FILE = "file"
@@ -41,7 +40,6 @@ SCAN_INTERVAL = timedelta(seconds=15)
 
 
 async def async_setup(
-    hass: HomeAssistant,
     entry: config_entries.ConfigEntry,
 ) -> None:
     """The setup method"""
@@ -80,7 +78,6 @@ class MonoXSensor(SensorEntity, AnycubicUartEntityBase):
         """Initialize the sensor."""
         super().__init__(entry)
         self.cancel_scheduled_update = None
-        self.monox = MonoXAPI(entry.data[CONF_HOST], UART_WIFI_PORT)
         self.entry = entry
         self.hass = hass
         self._attr_native_value = ""
@@ -96,7 +93,10 @@ class MonoXSensor(SensorEntity, AnycubicUartEntityBase):
 
     async def async_update(self) -> None:
         """Fetch new state data for the sensor."""
-        response:MonoXStatus = self.monox.getstatus()
+        try:
+            response: MonoXStatus = MonoXAPI(self.entry.data[CONF_HOST], UART_WIFI_PORT).getstatus()
+        except AnycubicException:
+            return
         self._attr_extra_state_attributes = {}
 
         if response is not None:
@@ -149,7 +149,9 @@ class MonoXSensor(SensorEntity, AnycubicUartEntityBase):
         self._attr_extra_state_attributes[key] = str(datetime.timedelta(seconds=value))
 
     @callback
-    def update_callback(self, no_delay=False) -> None:
+    def update_callback(
+        self, no_delay=False
+    ) -> None:  # pylint: disable=unused-argument
         """Update the sensor's state, if needed.
 
         Parameter no_delay is True when device_event_reachable is sent.
@@ -157,22 +159,21 @@ class MonoXSensor(SensorEntity, AnycubicUartEntityBase):
         self.hass.add_job(self.async_update_ha_state(self.async_update))
 
         @callback
-        def scheduled_update(now):
+        def scheduled_update(now):  # pylint: disable=unused-argument
             """Timer callback for sensor update."""
             self.cancel_scheduled_update = None
 
-
-@callback
-def async_check_significant_change(
-    self,
-    hass: HomeAssistant,
-    old_state: str,
-    old_attrs: dict,
-    new_state: str,
-    new_attrs: dict,
-    **kwargs: Any,
-) -> bool:
-    """Significant Change Support. Insignificant changes are attributes only."""
-    if old_state != new_state:
-        return True
-    return False
+    @callback
+    def async_check_significant_change(
+        self,  # pylint: disable=unused-argument
+        hass: HomeAssistant,  # pylint: disable=unused-argument
+        old_state: str,
+        old_attrs: dict,  # pylint: disable=unused-argument
+        new_state: str,
+        new_attrs: dict,  # pylint: disable=unused-argument
+        **kwargs: Any,  # pylint: disable=unused-argument
+    ) -> bool:
+        """Significant Change Support. Insignificant changes are attributes only."""
+        if old_state != new_state:
+            return True
+        return False

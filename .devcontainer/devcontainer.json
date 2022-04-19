@@ -12,15 +12,19 @@
   },
   // Set *default* container specific settings.json values on container create.
   "settings": {
+    "files.eol": "\n",
+		"editor.tabSize": 4,
+		"python.pythonPath": "/usr/bin/python3",
+		"python.analysis.autoSearchPaths": false,
+		"python.linting.pylintEnabled": true,
+		"python.linting.enabled": true,
+		"python.formatting.provider": "black",
+		"editor.formatOnPaste": false,
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"files.trimTrailingWhitespace": true,
     "python.defaultInterpreterPath": "/usr/local/bin/python",
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true,
-    "python.formatting.provider": "black",
     "python.testing.pytestArgs": ["--no-cov"],
-    "editor.formatOnPaste": false,
-    "editor.formatOnSave": true,
-    "editor.formatOnType": true,
-    "files.trimTrailingWhitespace": true,
     "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
     "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
     "python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
@@ -43,7 +47,8 @@
     "ms-python.vscode-pylance",
     "visualstudioexptteam.vscodeintellicode",
     "esbenp.prettier-vscode",
-    "xirider.livecode"
+    "xirider.livecode",
+    "the-compiler.python-tox"
   ],
   "containerEnv": {
     "PYTHONPATH ": "/workspaces/anycubic-python/src",

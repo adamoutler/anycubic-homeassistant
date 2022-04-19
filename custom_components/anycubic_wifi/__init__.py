@@ -2,7 +2,6 @@
 from __future__ import annotations
 from datetime import timedelta
 
-from .device import AnycubicUartWifiDevice
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -11,6 +10,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 
+from .device import AnycubicUartWifiDevice
 from .const import DOMAIN as MONOX_DOMAIN
 
 #  List the platforms that you want to support.

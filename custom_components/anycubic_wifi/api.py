@@ -1,8 +1,9 @@
 """Handles the API for Home Assistant."""
 from __future__ import annotations
+from typing import Iterable
 
 from uart_wifi.communication import UartWifi
-from uart_wifi.response import MonoXStatus, MonoXSysInfo
+from uart_wifi.response import MonoXStatus, MonoXSysInfo, MonoXResponseType
 from .errors import AnycubicMonoXAPILevel
 from .const import UART_WIFI_PORT
 
@@ -26,7 +27,10 @@ class MonoXAPI(UartWifi):
     def getstatus(self) -> MonoXStatus | None:
         """Get the MonoX Status"""
         try:
-            return self.send_request("getstatus,\r\n")
+            responses = [MonoXResponseType] = self.send_request("getstatus,\r\n")
+            for response in responses:
+                if isinstance(response, MonoXStatus):
+                    return response
         except OSError:
             raise AnycubicMonoXAPILevel from OSError
 
@@ -37,7 +41,6 @@ class MonoXAPI(UartWifi):
 
         except OSError:
             raise AnycubicMonoXAPILevel from OSError
-
 
 
 def get_split(the_ip: str, port) -> tuple[str, int]:
