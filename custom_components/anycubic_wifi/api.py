@@ -27,10 +27,12 @@ class MonoXAPI(UartWifi):
     def getstatus(self) -> MonoXStatus | None:
         """Get the MonoX Status"""
         try:
-            responses = [MonoXResponseType] = self.send_request("getstatus,\r\n")
+            responses = self.send_request("getstatus,\r\n")
             for response in responses:
                 if isinstance(response, MonoXStatus):
+                    adjust_based_on_time_deltav(response)
                     return response
+
         except OSError:
             raise AnycubicMonoXAPILevel from OSError
 
@@ -41,6 +43,22 @@ class MonoXAPI(UartWifi):
 
         except OSError:
             raise AnycubicMonoXAPILevel from OSError
+
+
+def adjust_based_on_time_deltav(response: MonoXStatus) -> None:
+    """ "The MonoX/Monox4k use minutes to record elapsed time.
+        The MonoX 6k uses sec. This method adjusts and adapts.
+    : response : The Status Message"""
+    if response.status == "print":
+        elapsed = int(response.seconds_elapse)
+        remain = int(response.seconds_remaining)
+        total = elapsed + remain
+        percent = elapsed / total * 100
+        claimed_percent = int(response.percent_complete)
+        variance_delta = percent / claimed_percent
+        if not 0.8 <= variance_delta <= 1.2:
+            # this is a printer which records elapsed in seconds.
+            response.seconds_elapse = response.seconds_elapse / 60
 
 
 def get_split(the_ip: str, port) -> tuple[str, int]:
