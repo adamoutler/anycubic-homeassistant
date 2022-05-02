@@ -7,9 +7,7 @@ from typing import Any
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components import dhcp
-from homeassistant.const import (
-    CONF_HOST,
-)
+from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.data_entry_flow import FlowResult
 from uart_wifi.response import MonoXResponseType
 
@@ -28,9 +26,12 @@ from .const import (
 
 LOGGER = logging.getLogger(__name__)
 
-user_data_schema: object = {
-    vol.Required(CONF_HOST, description={"suggested_value": "192.168.1.254"}): str,
-}
+user_data_schema = vol.Schema(
+    {
+        vol.Required(CONF_HOST, default="192.168.1.254"): str,
+        vol.Optional(CONF_PORT, default=UART_WIFI_PORT): int,
+    }
+)
 
 
 @config_entries.HANDLERS.register(DOMAIN)
@@ -59,10 +60,6 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             errors = {"0": "invalid_ip"}
         else:
 
-            data = self.discovery_schema or {
-                vol.Required(CONF_HOST): str,
-            }
-
             return self.async_show_form(
                 step_id="user",
                 description_placeholders=user_input,
@@ -83,7 +80,7 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Gather information from a discovered device"""
         if discovered_information[CONF_HOST] is not None:
-            get_monox_info(discovered_information[CONF_HOST], self.data)
+            await get_monox_info(discovered_information[CONF_HOST], self.data)
             await self.async_set_unique_id(DOMAIN + "." + self.data[CONF_SERIAL])
             self._abort_if_unique_id_configured(
                 updates={CONF_HOST: discovered_information[CONF_HOST]}

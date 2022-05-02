@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Iterable
 
 from uart_wifi.communication import UartWifi
-from uart_wifi.response import MonoXStatus, MonoXSysInfo, MonoXResponseType
+from uart_wifi.response import MonoXStatus, MonoXSysInfo
 from .errors import AnycubicMonoXAPILevel
 from .const import UART_WIFI_PORT
 
@@ -18,8 +18,9 @@ class MonoXAPI(UartWifi):
         :ip_address: The IP address to target for communications.
         :port: The port for communications.
         """
-        the_ip, the_port = get_split(ip_address, port)
-        port = int(the_port)
+        the_ip, url_port = get_split(ip_address, port)
+        if url_port is not None and url_port != 0:
+            port = int(url_port)
         super().__init__(the_ip, port)
         self.ip_address = the_ip
         self.port = port
@@ -27,13 +28,15 @@ class MonoXAPI(UartWifi):
     def getstatus(self) -> MonoXStatus | None:
         """Get the MonoX Status"""
         try:
-            responses = self.send_request("getstatus,\r\n")
-            if responses is None:
+            response = self.send_request("getstatus,\r\n")
+            if response is None:
                 return None
-            for response in responses:
-                if isinstance(response, MonoXStatus):
-                    adjust_based_on_time_deltav(response)
-                    return response
+            if isinstance(response, MonoXStatus):
+                return response
+            for item in response:
+                if isinstance(item, MonoXStatus):
+                    adjust_based_on_time_deltav(item)
+                    return item
 
         except OSError:
             raise AnycubicMonoXAPILevel from OSError
@@ -41,8 +44,12 @@ class MonoXAPI(UartWifi):
     def sysinfo(self) -> MonoXSysInfo | None:
         """Get the MonoX Status"""
         try:
-            return self.send_request("sysinfo,\r\n")
-
+            response = self.send_request("sysinfo,\r\n")
+            for item in response:
+                if isinstance(item, MonoXSysInfo):
+                    return item
+            if isinstance(response, MonoXSysInfo):
+                return response
         except OSError:
             raise AnycubicMonoXAPILevel from OSError
 
@@ -58,7 +65,7 @@ def adjust_based_on_time_deltav(response: MonoXStatus) -> None:
         percent = elapsed / total * 100
         claimed_percent = int(response.percent_complete)
         variance_delta = percent / claimed_percent
-        if 0.8 <= variance_delta <= 1.2:
+        if  variance_delta >= 1.1:
             # this is a printer which records elapsed in seconds.
             response.seconds_elapse = response.seconds_elapse / 60
 

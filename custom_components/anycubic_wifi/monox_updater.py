@@ -11,11 +11,11 @@ from .const import (
 )
 
 
-def get_monox_info(host: str, data: dict, port: int = 6000) -> None:
+async def get_monox_info(host: str, data: dict, port: int = 6000) -> None:
     """Gather information from the device, given the IP address"""
     api = MonoXAPI(host, port)
     try:
-        sysinfo = api.sysinfo()[0]
+        sysinfo = api.sysinfo()
     except ConnectionException:
         return
 
