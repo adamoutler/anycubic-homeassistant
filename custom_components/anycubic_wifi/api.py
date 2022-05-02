@@ -28,6 +28,8 @@ class MonoXAPI(UartWifi):
         """Get the MonoX Status"""
         try:
             responses = self.send_request("getstatus,\r\n")
+            if responses is None:
+                return None
             for response in responses:
                 if isinstance(response, MonoXStatus):
                     adjust_based_on_time_deltav(response)

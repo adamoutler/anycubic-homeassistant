@@ -28,6 +28,10 @@ from .const import (
 
 LOGGER = logging.getLogger(__name__)
 
+user_data_schema: object = {
+    vol.Required(CONF_HOST, description={"suggested_value": "192.168.1.254"}): str,
+}
+
 
 @config_entries.HANDLERS.register(DOMAIN)
 class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -62,7 +66,7 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_show_form(
                 step_id="user",
                 description_placeholders=user_input,
-                data_schema=vol.Schema(data),
+                data_schema=user_data_schema,
                 errors=errors,
             )
 
