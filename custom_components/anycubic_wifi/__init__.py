@@ -11,7 +11,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 
 from .device import AnycubicUartWifiDevice
-from .const import DOMAIN as MONOX_DOMAIN
+from .const import DOMAIN as MONOX_DOMAIN, POLL_INTERVAL
 
 #  List the platforms that you want to support.
 # For your initial PR, limit it to 1 platform.
@@ -30,7 +30,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return False
 
     hass.data[DOMAIN][entry.unique_id] = device
-    hass.data[DOMAIN][CONF_SCAN_INTERVAL] = timedelta(seconds=15)
+    hass.data[DOMAIN][CONF_SCAN_INTERVAL] = timedelta(seconds=POLL_INTERVAL)
 
     await device.async_update_device_registry()
 

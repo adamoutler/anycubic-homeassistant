@@ -16,6 +16,6 @@ DEFAULT_STATE = "offline"
 CONF_SERIAL = "serial_number"
 SW_VERSION = "sw_version"
 DEFAULT_EVENTS = True
-
+POLL_INTERVAL = 60  # seconds
 PLATFORMS = [Platform.SENSOR]
 CONFIG_FLOW_VERSION = 1

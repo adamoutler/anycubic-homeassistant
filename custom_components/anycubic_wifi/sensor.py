@@ -24,6 +24,7 @@ from .const import (
     DOMAIN,
     PRINTER_ICON,
     UART_WIFI_PORT,
+    POLL_INTERVAL,
 )
 
 
@@ -36,7 +37,7 @@ _ATTR_REMLAYER = "remaining_layer_num"
 _ATTR_ELAPSEDTIME = "elapsed_time"
 _ATTR_REMAINTIME = "remaining_time"
 
-SCAN_INTERVAL = timedelta(seconds=15)
+SCAN_INTERVAL = timedelta(seconds=POLL_INTERVAL)
 
 
 async def async_setup(
