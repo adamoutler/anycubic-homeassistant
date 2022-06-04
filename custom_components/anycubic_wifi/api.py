@@ -64,8 +64,10 @@ def adjust_based_on_time_deltav(response: MonoXStatus) -> None:
         total = elapsed + remain
         percent = elapsed / total * 100
         claimed_percent = int(response.percent_complete)
+        if percent == 0 or claimed_percent == 0:
+            return
         variance_delta = percent / claimed_percent
-        if  variance_delta >= 1.1:
+        if variance_delta >= 1.1:
             # this is a printer which records elapsed in seconds.
             response.seconds_elapse = response.seconds_elapse / 60
 
