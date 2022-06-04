@@ -11,7 +11,7 @@ from .const import (
 )
 
 
-async def get_monox_info(host: str, data: dict, port: int = 6000) -> None:
+def get_monox_info(host: str, data: dict, port: int = 6000) -> None:
     """Gather information from the device, given the IP address"""
     api = MonoXAPI(host, port)
     try:
