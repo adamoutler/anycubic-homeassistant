@@ -80,7 +80,7 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Gather information from a discovered device"""
         if discovered_information[CONF_HOST] is not None:
-            await get_monox_info(discovered_information[CONF_HOST], self.data)
+            get_monox_info(discovered_information[CONF_HOST], self.data)
             await self.async_set_unique_id(DOMAIN + "." + self.data[CONF_SERIAL])
             self._abort_if_unique_id_configured(
                 updates={CONF_HOST: discovered_information[CONF_HOST]}
