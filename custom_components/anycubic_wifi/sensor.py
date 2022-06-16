@@ -108,7 +108,8 @@ class MonoXSensor(SensorEntity, AnycubicUartEntityBase):
             if hasattr(response, "status"):
                 self._attr_native_value = response.status.strip()
                 self._attr_state = self._attr_native_value
-
+            else:
+                return
             if hasattr(response, "current_layer"):
                 self.set_attr_int(_ATTR_CURLAYER, int(response.current_layer))
             if hasattr(response, "total_layers"):

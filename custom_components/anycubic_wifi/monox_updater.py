@@ -18,7 +18,6 @@ def get_monox_info(host: str, data: dict, port: int = 6000) -> None:
         sysinfo = api.sysinfo()
     except ConnectionException:
         return
-
     if isinstance(sysinfo, MonoXSysInfo):
         data[CONF_HOST] = host
         map_sysinfo_to_data(sysinfo, data)
@@ -26,7 +25,11 @@ def get_monox_info(host: str, data: dict, port: int = 6000) -> None:
 
 def map_sysinfo_to_data(sysinfo: MonoXSysInfo, data: dict) -> None:
     """map the sysInfo result to a dictionary"""
-    data[SW_VERSION] = sysinfo.firmware
-    data[CONF_MODEL] = sysinfo.model
-    data[CONF_NAME] = sysinfo.model
-    data[CONF_SERIAL] = sysinfo.serial
+    if hasattr(sysinfo, "firmware"):
+        data[SW_VERSION] = sysinfo.firmware
+    if hasattr(sysinfo, "model"):
+        data[CONF_MODEL] = sysinfo.model
+    if hasattr(sysinfo, "model"):
+        data[CONF_NAME] = sysinfo.model
+    if hasattr(sysinfo, "serial"):
+        data[CONF_SERIAL] = sysinfo.serial
