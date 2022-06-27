@@ -25,7 +25,7 @@ class MonoXAPI(UartWifi):
         self.ip_address = the_ip
         self.port = port
 
-    def getstatus(self) -> MonoXStatus | None:
+    async def getstatus(self) -> MonoXStatus | None:
         """Get the MonoX Status"""
         try:
             response = self.send_request("getstatus,\r\n")

@@ -191,8 +191,11 @@ class AnycubicUartWifiDevice:
             if CONF_HOST in self.config_entry.as_dict().keys():
                 # we are already setup.
                 if self.config_entry.data[CONF_HOST] is not None:
-                    self.api = await get_anycubic_device(
-                        self.hass, self.config_entry.data[CONF_HOST]
+                    self.api = asyncio.wait_for(
+                        get_anycubic_device(
+                            self.hass, self.config_entry.data[CONF_HOST]
+                        ),
+                        5,
                     )
                     monox_updater.map_sysinfo_to_data(
                         self.api.sysinfo(), self.config_entry.data
@@ -223,7 +226,7 @@ async def get_anycubic_device(hass, ip_address) -> MonoXAPI | None:
     device = AnycubicUartWifiDevice(hass, {CONF_HOST: ip_address})
 
     try:
-        await MonoXAPI(device.ip_address, UART_WIFI_PORT).getstatus()
+        asyncio.wait_for(MonoXAPI(device.ip_address, UART_WIFI_PORT).getstatus(), 5)
         return device
 
     except (asyncio.TimeoutError) as err:

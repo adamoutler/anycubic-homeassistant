@@ -1,5 +1,6 @@
 """Platform for sensor integration."""
 from __future__ import annotations
+import asyncio
 from datetime import timedelta
 import datetime
 from typing import Any
@@ -95,9 +96,9 @@ class MonoXSensor(SensorEntity, AnycubicUartEntityBase):
     async def async_update(self) -> None:
         """Fetch new state data for the sensor."""
         try:
-            response: MonoXStatus = MonoXAPI(
-                self.entry.data[CONF_HOST], UART_WIFI_PORT
-            ).getstatus()
+            response: MonoXStatus = await asyncio.wait_for(
+                MonoXAPI(self.entry.data[CONF_HOST], UART_WIFI_PORT).getstatus(), 10
+            )
         except AnycubicException:
             return
         if response is None or not isinstance(response, MonoXStatus):

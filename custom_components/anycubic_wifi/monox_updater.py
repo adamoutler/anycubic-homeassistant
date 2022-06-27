@@ -1,4 +1,5 @@
 """Utility class to update mono x configuration"""
+import asyncio
 from uart_wifi.response import MonoXSysInfo
 from uart_wifi.errors import ConnectionException
 from homeassistant.const import CONF_HOST, CONF_NAME
