@@ -15,7 +15,6 @@ from .device import AnycubicUartWifiDevice
 from .monox_updater import get_monox_info
 from .api import MonoXAPI
 
-
 from .errors import CannotConnect
 from .const import (
     CONF_MODEL,
@@ -26,12 +25,12 @@ from .const import (
 
 LOGGER = logging.getLogger(__name__)
 
-user_data_schema = vol.Schema(
-    {
-        vol.Required(CONF_HOST, default="192.168.1.254"): str,
-        vol.Optional(CONF_PORT, default=UART_WIFI_PORT): int,
-    }
-)
+user_data_schema = vol.Schema({
+    vol.Required(CONF_HOST, default="192.168.1.254"):
+    str,
+    vol.Optional(CONF_PORT, default=UART_WIFI_PORT):
+    int,
+})
 
 
 @config_entries.HANDLERS.register(DOMAIN)
@@ -67,24 +66,25 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 errors=errors,
             )
 
-    async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo) -> FlowResult:
+    async def async_step_dhcp(
+            self, discovery_info: dhcp.DhcpServiceInfo) -> FlowResult:
         """Prepare configuration for a DHCP discovered Anycubic uart-wifi device."""
         if discovery_info.ip is not None:
             discovered_information = {}
             discovered_information[CONF_HOST] = str(discovery_info.ip)
             self.data = {}
-            return await self._process_discovered_device(discovered_information)
+            return await self._process_discovered_device(discovered_information
+                                                         )
 
     async def process_discovered_device(
-        self, discovered_information: dict
-    ) -> FlowResult:
+            self, discovered_information: dict) -> FlowResult:
         """Gather information from a discovered device"""
         if discovered_information[CONF_HOST] is not None:
             get_monox_info(discovered_information[CONF_HOST], self.data)
-            await self.async_set_unique_id(DOMAIN + "." + self.data[CONF_SERIAL])
+            await self.async_set_unique_id(DOMAIN + "." +
+                                           self.data[CONF_SERIAL])
             self._abort_if_unique_id_configured(
-                updates={CONF_HOST: discovered_information[CONF_HOST]}
-            )
+                updates={CONF_HOST: discovered_information[CONF_HOST]})
             return self.async_create_entry(
                 title=self.data[CONF_MODEL],
                 data=self.data,
@@ -99,17 +99,14 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(DOMAIN + "." + device[CONF_SERIAL])
 
         self._abort_if_unique_id_configured(
-            updates={CONF_HOST: device[CONF_HOST]}, reload_on_update=True
-        )
+            updates={CONF_HOST: device[CONF_HOST]}, reload_on_update=True)
 
-        self.context.update(
-            {
-                "title_placeholders": {
-                    CONF_HOST: device[CONF_HOST],
-                },
-                "configuration_url": f"http://{device[CONF_HOST]}",
-            }
-        )
+        self.context.update({
+            "title_placeholders": {
+                CONF_HOST: device[CONF_HOST],
+            },
+            "configuration_url": f"http://{device[CONF_HOST]}",
+        })
 
         self.discovery_schema = {
             vol.Required(CONF_HOST, default=device[CONF_HOST]): str,
@@ -124,11 +121,9 @@ def get_anycubic_device(hass, the_ip) -> AnycubicUartWifiDevice | None:
     device = AnycubicUartWifiDevice(hass, {CONF_HOST: the_ip})
 
     try:
-        return (
-            device
-            if isinstance(MonoXAPI(the_ip, UART_WIFI_PORT).sysinfo(), MonoXResponseType)
-            else None
-        )
+        return (device if isinstance(
+            MonoXAPI(the_ip, UART_WIFI_PORT).sysinfo(), MonoXResponseType) else
+                None)
     except (asyncio.TimeoutError) as err:
         LOGGER.error("Error connecting to the 3D Printer device at %s", the_ip)
         raise CannotConnect from err
