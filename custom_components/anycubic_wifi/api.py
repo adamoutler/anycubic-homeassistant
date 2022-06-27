@@ -6,7 +6,9 @@ from uart_wifi.communication import UartWifi
 from uart_wifi.response import MonoXStatus, MonoXSysInfo
 from .errors import AnycubicMonoXAPILevel
 from .const import UART_WIFI_PORT
+import logging
 
+_LOGGER = logging.getLogger(__name__)
 
 class MonoXAPI(UartWifi):
     """Class for MonoX API calls, Adapted to Home Assistant format."""
@@ -18,6 +20,7 @@ class MonoXAPI(UartWifi):
         :ip_address: The IP address to target for communications.
         :port: The port for communications.
         """
+        _LOGGER.info("Setting up connection")
         the_ip, url_port = get_split(ip_address, port)
         if url_port is not None and url_port != 0:
             port = int(url_port)
@@ -28,14 +31,19 @@ class MonoXAPI(UartWifi):
     async def getstatus(self) -> MonoXStatus | None:
         """Get the MonoX Status"""
         try:
+            _LOGGER.info("Collecting Status")
             response = self.send_request("getstatus,\r\n")
             if response is None:
+                _LOGGER.info("Collecting Status - None Response")
+
                 return None
             if isinstance(response, MonoXStatus):
                 return response
             for item in response:
                 if isinstance(item, MonoXStatus):
                     adjust_based_on_time_deltav(item)
+                    _LOGGER.info("Collecting Status - API returned status")
+
                     return item
 
         except OSError:
@@ -44,11 +52,15 @@ class MonoXAPI(UartWifi):
     def sysinfo(self) -> MonoXSysInfo | None:
         """Get the MonoX Status"""
         try:
+            _LOGGER.info("Collecting Sysinfo")
+
             response = self.send_request("sysinfo,\r\n")
             for item in response:
                 if isinstance(item, MonoXSysInfo):
+                    _LOGGER.info("Collecting Sysinfo - None Response")
                     return item
             if isinstance(response, MonoXSysInfo):
+                _LOGGER.info("Collecting Sysinfo -Returning response")
                 return response
         except OSError:
             raise AnycubicMonoXAPILevel from OSError
@@ -58,7 +70,12 @@ def adjust_based_on_time_deltav(response: MonoXStatus) -> None:
     """ "The MonoX/Monox4k use minutes to record elapsed time.
         The MonoX 6k uses sec. This method adjusts and adapts.
     : response : The Status Message"""
-    if response.status == "print":
+    _LOGGER.info("Collecting Status - parsing started")
+
+    if response.status == "print" and hasattr(
+            response, "seconds_elapse") and hasattr(
+                response, "seconds_remaining") and hasattr(
+                    response, "percent_complete"):
         elapsed = int(response.seconds_elapse)
         remain = int(response.seconds_remaining)
         total = elapsed + remain

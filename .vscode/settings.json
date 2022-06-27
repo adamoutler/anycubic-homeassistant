@@ -21,5 +21,8 @@
     "Zhome",
     "Zmove"
   ],
-  "python.analysis.extraPaths": ["/workspaces/anycubic-python/src"]
+  "python.analysis.extraPaths": [
+    "/workspaces/anycubic-python/src"
+  ],
+  "python.formatting.provider": "yapf"
 }
