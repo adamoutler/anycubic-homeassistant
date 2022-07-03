@@ -4,8 +4,8 @@ import logging
 from typing import Type
 from uart_wifi.communication import UartWifi
 from uart_wifi.response import MonoXResponseType, MonoXStatus, MonoXSysInfo
-from .errors import AnycubicMonoXAPILevel
 from .const import UART_WIFI_PORT
+from .errors import AnycubicException
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class MonoXAPIAdapter(UartWifi):
         :port: The port for communications.
         """
         _LOGGER.info("Setting up connection")
-        the_ip, url_port = get_split(ip_address, port)
+        the_ip, url_port = split_ip_and_port(ip_address, port)
         if url_port is not None and url_port != 0:
             port = int(url_port)
         super().__init__(the_ip, port)
@@ -29,28 +29,30 @@ class MonoXAPIAdapter(UartWifi):
         self.port = port
 
     async def getstatus(self) -> MonoXStatus | None:
-        """Get the MonoX Status
+        """Get the MonoX Status.  Waits for a maximum of 5 seconds.
         :returns: MonoXStatus or none."""
         try:
             _LOGGER.debug("Collecting Status")
             response = self.send_request("getstatus,\r\n")
-            self.telnet_socket.close()
             return parse_response_stream(response=response,
                                          expected_type=MonoXStatus)
-        except OSError:
-            raise AnycubicMonoXAPILevel from OSError
+        except (OSError) as ex:
+            raise AnycubicException from ex
+        finally:
+            self.telnet_socket.close()
 
     async def sysinfo(self) -> MonoXSysInfo | None:
-        """Get the MonoX Status
+        """Get the MonoX System Information.  Waits for a maximum of 5 seconds.
          :returns: MonoXSysInfo or none."""
         try:
             _LOGGER.debug("Collecting Sysinfo")
             response = self.send_request("sysinfo,\r\n")
-            self.telnet_socket.close()
             return parse_response_stream(response=response,
                                          expected_type=MonoXSysInfo)
-        except OSError:
-            raise AnycubicMonoXAPILevel from OSError
+        except (OSError, RuntimeError) as ex:
+            raise AnycubicException from ex
+        finally:
+            self.telnet_socket.close()
 
 
 def parse_response_stream(
@@ -69,14 +71,16 @@ def parse_response_stream(
     return None
 
 
-def get_split(the_ip: str, port) -> tuple[str, int]:
+def split_ip_and_port(the_ip: str, port) -> tuple[str, int]:
     """Split the ip address from the port.
     If the port is provided in the IP address,
     then we use that.
     :the_ip: the IP address to use
     :port: The port to use.
+    :returns: if the ip contains a semicolon, then the_ip's port
+    will be returned otherwise we return the_ip and port
     """
     ipsplit = the_ip.split(":")
     if len(ipsplit) > 1:
-        return ipsplit[0], ipsplit[1]
+        return ipsplit[0], int(ipsplit[1])
     return str(ipsplit[0]), int(port)

@@ -12,7 +12,7 @@ from homeassistant.data_entry_flow import FlowResult
 from uart_wifi.response import MonoXSysInfo
 from uart_wifi.errors import ConnectionException
 from .const import SW_VERSION
-
+from .errors import AnycubicException
 from .mono_x_api_adapter_fascade import MonoXAPIAdapter
 
 from .const import (
@@ -27,6 +27,8 @@ user_data_schema = vol.Schema({
     vol.Required(CONF_HOST, default="192.168.1.254"):
     str,
 })
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @config_entries.HANDLERS.register(DOMAIN)
@@ -95,7 +97,8 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     data=self.data,
                     description="Anycubic Uart Device",
                 )
-            except ConnectionException:
+            except (AnycubicException, ConnectionException) as ex:
+                _LOGGER.error("Exception while processing device data %s", ex)
                 return await self.async_step_user()
 
     def map_sysinfo_to_data(self, sysinfo: MonoXSysInfo) -> dict:

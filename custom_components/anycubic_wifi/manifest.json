@@ -3,14 +3,13 @@
   "domain": "anycubic_wifi",
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/anycubic_wifi",
-  "requirements": ["uart-wifi==0.1.3"],
+  "requirements": ["uart-wifi==0.1.6"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
   "dependencies": [],
-  "version":"1",
-  "codeowners": [ "@adamoutler" ],
+  "version": "1",
+  "codeowners": ["@adamoutler"],
   "iot_class": "local_polling",
-  "dhcp": [{"hostname":"uart-wifi","macaddress":"286DCD*"}]
-
+  "dhcp": [{ "hostname": "uart-wifi", "macaddress": "286DCD*" }]
 }

@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 from uart_wifi.errors import ConnectionException
-from .data_access_object import AnycubicDataBridge
+from .data_bridge import AnycubicDataBridge
 from .mono_x_api_adapter_fascade import MonoXAPIAdapter
 from .const import ANYCUBIC_3D_PRINTER_NAME, DOMAIN, PLATFORMS, POLL_INTERVAL
 
@@ -66,14 +66,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         [host, port] = entry.data[CONF_HOST].split(":")
 
     api = MonoXAPIAdapter(host, port)
-    dao = AnycubicDataBridge(hass, api, entry, POLL_INTERVAL)
+    bridge = AnycubicDataBridge(hass, api, entry, POLL_INTERVAL)
     hass.data[DOMAIN][entry.entry_id] = {
-        "coordinator": dao,
+        "coordinator": bridge,
     }
-
-    await dao.update()
+    await bridge.async_config_entry_first_refresh()
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     return True
+
+
+async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Update listener."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 def get_monox_info(host: str, port: int = 6000) -> None:

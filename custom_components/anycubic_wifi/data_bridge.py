@@ -28,8 +28,8 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     """Coordinator for data updates"""
     monox: MonoXAPIAdapter
     reported_status: MonoXStatus = None
-    reported_status_extras = None
-    sysinfo: MonoXSysInfo = {}
+    reported_status_extras = {}
+    sysinfo: MonoXSysInfo = None
     measure_elapsed_in_seconds = False
     entry: ConfigEntry
 
@@ -40,7 +40,7 @@ class AnycubicDataBridge(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=f"anycubic-{config_entry.entry_id}",
-            update_method=self.update,
+            update_method=self._async_update_data,
             update_interval=timedelta(seconds=interval),
         )
         self.entry = config_entry
@@ -81,6 +81,7 @@ class AnycubicDataBridge(DataUpdateCoordinator):
             self.reported_status = OFFLINE_STATUS
             self.reported_status_extras = {}
         _LOGGER.debug("Update complete")
+        self.reported_status_extras.update({"ip": self.monox.ip_address})
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -88,20 +89,25 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         unique_id = cast(str, self.entry.unique_id)
 
         try:
-            return DeviceInfo(
-                identifiers={(DOMAIN, unique_id)},
-                manufacturer=ATTR_MANUFACTURER,
-                connections=[("serial", self.coordinator.sysinfo.serial)],
-                suggested_area=SUGGESTED_AREA,
-                sw_version=self.coordinator.sysinfo.firmware,
-                via_device=self.coordinator.sysinfo.wifi,
-                model=self.coordinator.sysinfo.model,
-                name=ATTR_MANUFACTURER + self.coordinator.sysinfo.model + " " +
-                self.coordinator.sysinfo.serial[-4:4],
-            )
-        except AttributeError:
-            pass
+            return DeviceInfo(identifiers={(DOMAIN, unique_id)},
+                              manufacturer=ATTR_MANUFACTURER,
+                              connections=[("serial", self.sysinfo.serial)],
+                              suggested_area=SUGGESTED_AREA,
+                              sw_version=self.sysinfo.firmware,
+                              hw_version=self.monox.ip_address,
+                              supported_features=self.monox.ip_address,
+                              model=self.sysinfo.model,
+                              name=ATTR_MANUFACTURER + " " +
+                              self.sysinfo.model + " " +
+                              self.sysinfo.serial[-4:4])
+
+        except AttributeError as ex:
+            _LOGGER.debug(ex)
         return DeviceInfo(manufacturer=ATTR_MANUFACTURER)
+
+    @property
+    def product_name(self):
+        return "asldkfjaslkdfjzxcv zxcvzxcvzx"
 
 
 def _seconds_to_hhmmss(raw_value):

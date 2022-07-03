@@ -4,9 +4,9 @@ import datetime
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from uart_wifi.response import MonoXStatus
+from homeassistant.helpers.entity import DeviceInfo
 
 from .const import OFFLINE_STATUS
 
@@ -14,21 +14,18 @@ from . import AnycubicDataBridge
 
 
 # https://github.com/home-assistant/core/blob/dev/homeassistant/components/octoprint/sensor.py#L92
-class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge],
-                                  Entity):
+class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge]):
     """Base common to all MonoX entities."""
 
-    def __init__(self, entry: ConfigEntry,
-                 dao: AnycubicDataBridge) -> None:
+    def __init__(self, entry: ConfigEntry, bridge: AnycubicDataBridge) -> None:
         """Initialize the base MonoX entity object.
         :entry: the configuration data.
         :coordinator: the processing and storage of updates.
         """
         self.entry = entry
-        self.dao = dao
+        self.bridge = bridge
         self._attr_unique_id = self.entry.entry_id
-        super().__init__(dao)
-
+        super().__init__(bridge)
 
     async def async_added_to_hass(self) -> None:
         """Subscribe device events."""
@@ -39,10 +36,10 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge],
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        if (self.dao is None
-                or not isinstance(self.dao.reported_status, MonoXStatus)):
+        if (self.bridge is None
+                or not isinstance(self.bridge.reported_status, MonoXStatus)):
             return False
-        return self.dao.reported_status.status is not OFFLINE_STATUS.status
+        return self.bridge.reported_status.status is not OFFLINE_STATUS.status
 
     @callback
     async def update_callback(self) -> None:
@@ -53,3 +50,12 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge],
         """Handle state attributes"""
         self._attr_extra_state_attributes[key] = str(
             datetime.timedelta(seconds=value))
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Device info."""
+        return self.bridge.device_info
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self.async_write_ha_state()
