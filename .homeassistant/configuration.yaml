@@ -15,3 +15,7 @@ homeassistant:
         - 0.0.0.0/0
       allow_bypass_login: true
     - type: homeassistant
+logger:
+  default: info
+  logs:
+    custom_components.anycubic_wifi: debug

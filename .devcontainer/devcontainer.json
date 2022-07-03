@@ -10,19 +10,20 @@
       "NODE_VERSION": "lts/*"
     }
   },
+  "runArgs": ["--privileged"],
   // Set *default* container specific settings.json values on container create.
   "settings": {
     "files.eol": "\n",
-		"editor.tabSize": 4,
-		"python.pythonPath": "/usr/bin/python3",
-		"python.analysis.autoSearchPaths": false,
-		"python.linting.pylintEnabled": true,
-		"python.linting.enabled": true,
-		"python.formatting.provider": "black",
-		"editor.formatOnPaste": false,
-		"editor.formatOnSave": true,
-		"editor.formatOnType": true,
-		"files.trimTrailingWhitespace": true,
+    "editor.tabSize": 4,
+    "python.pythonPath": "/usr/bin/python3",
+    "python.analysis.autoSearchPaths": false,
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true,
+    "python.formatting.provider": "black",
+    "editor.formatOnPaste": false,
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "files.trimTrailingWhitespace": true,
     "python.defaultInterpreterPath": "/usr/local/bin/python",
     "python.testing.pytestArgs": ["--no-cov"],
     "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
@@ -48,7 +49,8 @@
     "visualstudioexptteam.vscodeintellicode",
     "esbenp.prettier-vscode",
     "xirider.livecode",
-    "the-compiler.python-tox"
+    "the-compiler.python-tox",
+    "ms-python.python"
   ],
   "containerEnv": {
     "PYTHONPATH ": "/workspaces/anycubic-python/src",

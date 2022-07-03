@@ -1,1 +1,1 @@
-This is a personal directory, meant to maintain settings and provide stability between container rebuilds.
+This is a personal directory, meant to maintain settings and provide stability between container rebuilds. To fresh install, delete everything named homeassistant and .storage, optionally, keep .storage/auth* files to maintain login.  This folder will start populating when Home Assistant is run, and will maintain generated data.
