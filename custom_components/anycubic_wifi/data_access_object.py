@@ -7,6 +7,7 @@ from typing import cast
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.core import callback
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.core import HomeAssistant
@@ -39,15 +40,16 @@ class AnycubicDataBridge(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=f"anycubic-{config_entry.entry_id}",
-            update_method=self._async_update_data,
+            update_method=self.update,
             update_interval=timedelta(seconds=interval),
         )
         self.entry = config_entry
         self.monox = monox
-        self.async_add_listener(self.refresh())
 
-    async def refresh(self):
+    @callback
+    async def update(self) -> None:
         """refresh data"""
+        _LOGGER.debug("Update Called")
         await self._async_update_data()
 
     async def _async_update_data(self):
@@ -79,7 +81,6 @@ class AnycubicDataBridge(DataUpdateCoordinator):
             self.reported_status = OFFLINE_STATUS
             self.reported_status_extras = {}
         _LOGGER.debug("Update complete")
-        return {"state": self.reported_status.status}
 
     @property
     def device_info(self) -> DeviceInfo:

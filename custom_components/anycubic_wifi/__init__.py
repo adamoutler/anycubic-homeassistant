@@ -71,7 +71,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "coordinator": dao,
     }
 
-    await dao.refresh()
+    await dao.update()
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     return True
 

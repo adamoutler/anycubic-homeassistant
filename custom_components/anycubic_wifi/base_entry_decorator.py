@@ -29,6 +29,7 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge],
         self._attr_unique_id = self.entry.entry_id
         super().__init__(dao)
 
+
     async def async_added_to_hass(self) -> None:
         """Subscribe device events."""
         self.async_on_remove(
@@ -41,7 +42,7 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge],
         if (self.dao is None
                 or not isinstance(self.dao.reported_status, MonoXStatus)):
             return False
-        return self.dao.reported_status.status is not OFFLINE_STATUS
+        return self.dao.reported_status.status is not OFFLINE_STATUS.status
 
     @callback
     async def update_callback(self) -> None:

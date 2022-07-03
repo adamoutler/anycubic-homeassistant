@@ -76,26 +76,30 @@ class MonoXSensor(SensorEntity, AnycubicEntityBaseDecorator, RestoreEntity):
 
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN,
                                                           entry.unique_id)})
+        dao.async_add_listener(self.update_callback)
+
+    @property
+    def extra_state_attributes(self):
+        return self.dao.reported_status_extras
 
     @property
     def native_value(self):
         """Return sensor state."""
-        if (self.coordinator.reported_status
-                and self.coordinator.reported_status.status):
-            return self.coordinator.reported_status.status
-        return None
+        return self.coordinator.reported_status.status
+
+    @callback
+    async def refresh(self) -> None:
+        await self.async_update()
 
     async def async_update(self) -> None:
         """Fetch new state data for the sensor."""
         if self.coordinator.reported_status is None or not isinstance(
                 self.coordinator.reported_status, MonoXStatus):
             return
-        self._attr_extra_state_attributes = self.coordinator.reported_status_extras
-
         self.hass.states.async_set(
             entity_id=self.entity_id,
-            new_state=self._attr_state,
-            attributes=self._attr_extra_state_attributes,
+            new_state=self.dao.reported_status,
+            attributes=self.dao.reported_status_extras,
             force_update=self.force_update,
             context=self._context,
         )
@@ -112,18 +116,15 @@ class MonoXSensor(SensorEntity, AnycubicEntityBaseDecorator, RestoreEntity):
         last_extras = await self.async_get_last_extra_data()
         if last_extras is not None and "last_extras" in last_state:
             self.coordinator.reported_status_extras = last_extras
-        self.coordinator.async_add_listener(self.async_update)
 
     @callback
-    def async_check_significant_change(
-        self,  # pylint: disable=unused-argument
-        old_state: str,
-        new_state: str,
-    ) -> bool:
-        """Significant Change Support. Insignificant changes are attributes only.
-        :old_state: the previous state of the sensor.
-        :new_state: the current state of the sensor
-        :return: true if new state is different than old state."""
-        if old_state != new_state:
-            return True
-        return False
+    async def update_callback(self, no_delay=False) -> None:  # pylint: disable=unused-argument
+        """Update the sensor's state, if needed.
+        Parameter no_delay is True when device_event_reachable is sent.
+        """
+        self.hass.add_job(self.async_update_ha_state(self.async_update))
+
+        @callback
+        def scheduled_update(now):  # pylint: disable=unused-argument
+            """Timer callback for sensor update."""
+            self.cancel_scheduled_update = None
