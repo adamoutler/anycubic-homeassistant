@@ -114,10 +114,20 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data[CONF_SERIAL] = sysinfo.serial
         return data
 
+    #https://github.com/home-assistant/core/blob/dev/homeassistant/components/axis/config_flow.py#L194
     async def _process_discovered_device(self, device: dict) -> Any:
         """Prepare configuration for a discovered Axis device."""
-
+        adapter = MonoXAPIAdapter(device[CONF_HOST])
+        system_information = await asyncio.wait_for(adapter.sysinfo(), 5)
+        device.update(self.map_sysinfo_to_data(system_information))
+        self._abort_if_unique_id_configured(updates={
+            CONF_HOST: device[CONF_HOST],
+        })
+        self._abort_if_unique_id_configured(updates={
+            CONF_HOST: device[CONF_SERIAL],
+        })
         self.discovery_schema = {
             vol.Required(CONF_HOST, default=device[CONF_HOST]): str,
         }
+
         return await self.async_step_user()
