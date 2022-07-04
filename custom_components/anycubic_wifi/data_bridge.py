@@ -1,5 +1,4 @@
 """Update coordinator"""
-import asyncio
 from datetime import timedelta
 import logging
 import time
@@ -50,7 +49,7 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     async def update(self) -> None:
         """refresh data"""
         _LOGGER.debug("Update Called")
-        await self._async_update_data()
+        self._async_update_data()
 
     async def _async_update_data(self):
         """Update data via API."""
@@ -59,15 +58,14 @@ class AnycubicDataBridge(DataUpdateCoordinator):
             if (not self.sysinfo or not getattr(self.sysinfo, "model")):
                 _LOGGER.info("Setting up %s", self.monox.ip_address)
 
-                info = await self.monox.sysinfo()
+                info = self.monox.sysinfo()
                 if hasattr(info, "model"):
                     self.sysinfo = info
                     self.measure_elapsed_in_seconds = "6K" in info.model
                     _LOGGER.info("Set up %s complete.", self.monox.ip_address)
                 else:
                     _LOGGER.error("Device offline: %s", self.monox.ip_address)
-            getstatus: MonoXStatus = await asyncio.wait_for(
-                self.monox.getstatus(), 5)
+            getstatus: MonoXStatus =self.monox.getstatus()
             if getstatus is not None:
                 self.reported_status = getstatus
                 self.reported_status_extras = _parse_status_extras(
@@ -123,7 +121,7 @@ def _parse_status_extras(stat: MonoXStatus, use_seconds: bool) -> dict:
     """Handle status for Mono X getstatus message"""
     extras = {}
 
-    if not stat or not stat.status:
+    if not stat or not hasattr(stat, "status"):
         return
     if hasattr(stat, 'seconds_remaining') and use_seconds:
         remain = int(stat.seconds_remaining)

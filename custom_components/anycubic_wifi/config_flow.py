@@ -80,8 +80,7 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if discovered_information[CONF_HOST] is not None:
             try:
                 adapter = MonoXAPIAdapter(discovered_information[CONF_HOST])
-                system_information = await asyncio.wait_for(
-                    adapter.sysinfo(), 5) or None
+                system_information = adapter.sysinfo()
                 if system_information is None:
                     return
                 self.data[CONF_HOST] = discovered_information[CONF_HOST]
@@ -124,7 +123,7 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         }
         try:
             adapter = MonoXAPIAdapter(device[CONF_HOST])
-            system_information = await adapter.sysinfo()
+            system_information = adapter.sysinfo()
             device.update(self.map_sysinfo_to_data(system_information))
         except (Exception) as ex:
             _LOGGER.exception(ex)

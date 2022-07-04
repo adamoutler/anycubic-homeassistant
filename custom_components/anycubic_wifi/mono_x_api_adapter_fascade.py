@@ -28,7 +28,7 @@ class MonoXAPIAdapter(UartWifi):
         self.ip_address = the_ip
         self.port = port
 
-    async def getstatus(self) -> MonoXStatus | None:
+    def getstatus(self) -> MonoXStatus | None:
         """Get the MonoX Status.  Waits for a maximum of 5 seconds.
         :returns: MonoXStatus or none."""
         try:
@@ -41,7 +41,7 @@ class MonoXAPIAdapter(UartWifi):
         finally:
             self.telnet_socket.close()
 
-    async def sysinfo(self) -> MonoXSysInfo | None:
+    def sysinfo(self) -> MonoXSysInfo | None:
         """Get the MonoX System Information.  Waits for a maximum of 5 seconds.
          :returns: MonoXSysInfo or none."""
         try:
