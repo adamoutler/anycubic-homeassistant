@@ -15,10 +15,10 @@ from uart_wifi.response import MonoXSysInfo
 from uart_wifi.response import MonoXStatus
 from uart_wifi.errors import ConnectionException
 from .errors import AnycubicException
-from .const import (POLL_INTERVAL, TYPE_INT, TYPE_STRING, TYPE_FLOAT, ATTR_MANUFACTURER,
-                    TYPE_ML, ATTR_REMAINING_LAYERS, TYPE_TIME, ATTR_TOTAL_TIME,
-                    DOMAIN, OFFLINE_STATUS, SUGGESTED_AREA,
-                    TRANSLATION_ATTRIBUTES)
+from .const import (POLL_INTERVAL, TYPE_INT, TYPE_STRING, TYPE_FLOAT,
+                    ATTR_MANUFACTURER, TYPE_ML, ATTR_REMAINING_LAYERS,
+                    TYPE_TIME, ATTR_TOTAL_TIME, DOMAIN, OFFLINE_STATUS,
+                    SUGGESTED_AREA, TRANSLATION_ATTRIBUTES)
 from .mono_x_api_adapter_fascade import MonoXAPIAdapter
 
 _LOGGER = logging.getLogger(__name__)
@@ -58,7 +58,8 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         try:
             if (not self.sysinfo or not getattr(self.sysinfo, "model")):
                 _LOGGER.info("Setting up %s", self.monox.ip_address)
-                info = await asyncio.wait_for(self.monox.sysinfo(), 5)
+
+                info = await self.monox.sysinfo()
                 if hasattr(info, "model"):
                     self.sysinfo = info
                     self.measure_elapsed_in_seconds = "6K" in info.model
