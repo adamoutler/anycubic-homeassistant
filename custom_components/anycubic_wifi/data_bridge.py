@@ -15,7 +15,7 @@ from uart_wifi.response import MonoXSysInfo
 from uart_wifi.response import MonoXStatus
 from uart_wifi.errors import ConnectionException
 from .errors import AnycubicException
-from .const import (TYPE_INT, TYPE_STRING, TYPE_FLOAT, ATTR_MANUFACTURER,
+from .const import (POLL_INTERVAL, TYPE_INT, TYPE_STRING, TYPE_FLOAT, ATTR_MANUFACTURER,
                     TYPE_ML, ATTR_REMAINING_LAYERS, TYPE_TIME, ATTR_TOTAL_TIME,
                     DOMAIN, OFFLINE_STATUS, SUGGESTED_AREA,
                     TRANSLATION_ATTRIBUTES)
@@ -31,19 +31,19 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     reported_status_extras = {}
     sysinfo: MonoXSysInfo = None
     measure_elapsed_in_seconds = False
-    entry: ConfigEntry
+    config_entry: ConfigEntry
 
     def __init__(self, hass: HomeAssistant, monox: MonoXAPIAdapter,
-                 config_entry: ConfigEntry, interval: int) -> None:
+                 config_entry: ConfigEntry) -> None:
         """Initialzie Update Cordinator"""
         super().__init__(
             hass,
             _LOGGER,
             name=f"anycubic-{config_entry.entry_id}",
             update_method=self._async_update_data,
-            update_interval=timedelta(seconds=interval),
+            update_interval=timedelta(seconds=POLL_INTERVAL),
         )
-        self.entry = config_entry
+        self.config_entry = config_entry
         self.monox = monox
 
     @callback
@@ -88,7 +88,7 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     @property
     def device_info(self) -> DeviceInfo:
         """Device info."""
-        unique_id = cast(str, self.entry.unique_id)
+        unique_id = cast(str, self.config_entry.unique_id)
 
         try:
             return DeviceInfo(identifiers={(DOMAIN, unique_id)},

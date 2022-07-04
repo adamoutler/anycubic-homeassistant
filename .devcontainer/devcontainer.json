@@ -51,7 +51,8 @@
 	"xirider.livecode",
 	"the-compiler.python-tox",
 	"ms-python.python",
-	"GitHub.copilot"
+	"GitHub.copilot",
+	"GitHub.vscode-pull-request-github"
 ],
   "containerEnv": {
     "PYTHONPATH ": "/workspaces/anycubic-python/src",

@@ -35,8 +35,9 @@ async def async_setup_entry(hass: HomeAssistant,
                             entry: config_entries.ConfigEntry,
                             async_add_entities: AddEntitiesCallback) -> None:
     """Set up the platform from config_entry."""
+    foo = hass.data.setdefault(DOMAIN, entry.entry_id)
     coordinator: AnycubicDataBridge = hass.data[DOMAIN][
-        entry.entry_id]["coordinator"]
+        entry.entry_id]["bridge"]
 
     @callback
     async def async_add_sensor() -> None:
@@ -91,7 +92,6 @@ class MonoXSensor(SensorEntity, AnycubicEntityBaseDecorator, RestoreEntity):
 
         last_state = await self.async_get_last_state()
 
-        self.bridge.async_add_listener(self.update_callback)
 
         if (last_state is None or last_state is not dict):
             return

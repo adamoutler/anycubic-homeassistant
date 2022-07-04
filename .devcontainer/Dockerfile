@@ -11,6 +11,7 @@ COPY requirements.txt /workspaces/session/
 EXPOSE 6000
 RUN pip --disable-pip-version-check --no-cache-dir install -r /workspaces/session/requirements.txt
 RUN if [ "${NODE_VERSION}" != "none" ]; then su vscode -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
+RUN apt update && apt install git
 # RUN ln -sf /dev/stdout /var/log/hass.log
 # [Optional] If your pip requirements rarely change, uncomment this section to add them to the image.
 # COPY requirements.txt /tmp/pip-tmp/

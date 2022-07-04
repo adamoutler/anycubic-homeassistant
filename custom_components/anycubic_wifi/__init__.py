@@ -5,15 +5,21 @@ import logging
 import slugify
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, SOURCE_IMPORT
-from homeassistant.const import (CONF_HOST, CONF_MONITORED_CONDITIONS,
-                                 CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL)
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_MONITORED_CONDITIONS,
+    CONF_NAME,
+    CONF_PORT,
+    CONF_SCAN_INTERVAL,
+)
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 from uart_wifi.errors import ConnectionException
 from .data_bridge import AnycubicDataBridge
 from .mono_x_api_adapter_fascade import MonoXAPIAdapter
-from .const import ANYCUBIC_3D_PRINTER_NAME, DOMAIN, PLATFORMS, POLL_INTERVAL
+from .const import (ANYCUBIC_3D_PRINTER_NAME, DOMAIN, PLATFORMS, POLL_INTERVAL,
+                    ANYCUBIC_WIFI_PORT)
 
 # For your initial PR, limit it to 1 platform.
 _LOGGER = logging.getLogger(__name__)
@@ -56,20 +62,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Anycubic Printer from a config entry."""
-
     hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][CONF_SCAN_INTERVAL] = timedelta(seconds=POLL_INTERVAL)
+    hass.data[DOMAIN].setdefault(entry.entry_id, {})
+    scan_delta=timedelta(seconds=POLL_INTERVAL)
+    hass.data[DOMAIN][entry.entry_id][CONF_SCAN_INTERVAL] =scan_delta
 
-    host = entry.data[CONF_HOST]
-    port = 6000
-    if ":" in host:
-        [host, port] = entry.data[CONF_HOST].split(":")
+    api = MonoXAPIAdapter(entry.data[CONF_HOST], ANYCUBIC_WIFI_PORT)
+    bridge = AnycubicDataBridge(hass, api, entry)
+    hass.data[DOMAIN][entry.entry_id]["bridge"] = bridge
 
-    api = MonoXAPIAdapter(host, port)
-    bridge = AnycubicDataBridge(hass, api, entry, POLL_INTERVAL)
-    hass.data[DOMAIN][entry.entry_id] = {
-        "coordinator": bridge,
-    }
     await bridge.async_config_entry_first_refresh()
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     return True

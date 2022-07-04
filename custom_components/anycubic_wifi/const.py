@@ -20,6 +20,7 @@ SUGGESTED_AREA = "Garage"
 DEFAULT_EVENTS = True
 POLL_INTERVAL = 10  # seconds
 PLATFORMS: list[Platform] = [Platform.SENSOR]
+ANYCUBIC_WIFI_PORT = 6000
 CONFIG_FLOW_VERSION = 1
 UART_WIFI_PROTOCOL = "Anycubic Uart Wifi Protocol"
 TYPE_STRING = 'str'
