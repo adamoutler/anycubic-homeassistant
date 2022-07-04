@@ -57,12 +57,14 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         _LOGGER.debug("Updating data")
         try:
             if (not self.sysinfo or not getattr(self.sysinfo, "model")):
+                _LOGGER.info("Setting up %s", self.monox.ip_address)
                 info = await asyncio.wait_for(self.monox.sysinfo(), 5)
                 if hasattr(info, "model"):
                     self.sysinfo = info
                     self.measure_elapsed_in_seconds = "6K" in info.model
+                    _LOGGER.info("Set up %s complete.", self.monox.ip_address)
                 else:
-                    raise AnycubicException("offline")
+                    _LOGGER.error("Device offline: %s", self.monox.ip_address)
             getstatus: MonoXStatus = await asyncio.wait_for(
                 self.monox.getstatus(), 5)
             if getstatus is not None:

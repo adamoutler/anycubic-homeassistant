@@ -81,7 +81,9 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 adapter = MonoXAPIAdapter(discovered_information[CONF_HOST])
                 system_information = await asyncio.wait_for(
-                    adapter.sysinfo(), 5)
+                    adapter.sysinfo(), 5) or None
+                if system_information is None:
+                    return
                 self.data[CONF_HOST] = discovered_information[CONF_HOST]
 
                 self.data.update(self.map_sysinfo_to_data(system_information))
@@ -117,21 +119,21 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     #https://github.com/home-assistant/core/blob/dev/homeassistant/components/axis/config_flow.py#L194
     async def _process_discovered_device(self, device: dict) -> Any:
         """Prepare configuration for a discovered Anycubic device."""
+        self.discovery_schema = {
+            vol.Required(CONF_HOST, default=device[CONF_HOST]): str,
+        }
         try:
             adapter = MonoXAPIAdapter(device[CONF_HOST])
-            system_information = await asyncio.wait_for(adapter.sysinfo(), 5)
+            system_information = await adapter.sysinfo()
             device.update(self.map_sysinfo_to_data(system_information))
-            self._abort_if_unique_id_configured(updates={
-                CONF_HOST: device[CONF_HOST],
-            })
-            self._abort_if_unique_id_configured(updates={
-                CONF_HOST: device[CONF_SERIAL],
-            })
-            self.discovery_schema = {
-                vol.Required(CONF_HOST, default=device[CONF_HOST]): str,
-            }
         except (Exception) as ex:
             _LOGGER.exception(ex)
-            return False
+            return
+        self._abort_if_unique_id_configured(updates={
+            CONF_HOST: device[CONF_HOST],
+        })
+        self._abort_if_unique_id_configured(updates={
+            CONF_HOST: device[CONF_SERIAL],
+        })
 
         return await self.async_step_user()
