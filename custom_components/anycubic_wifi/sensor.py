@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import timedelta
 import logging
 
-from uart_wifi.response import MonoXStatus
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -104,12 +103,6 @@ class MonoXSensor(SensorEntity, AnycubicEntityBaseDecorator, RestoreEntity):
 
     @callback
     async def update_callback(self) -> None:
-        """Update the sensor's state, if needed.
-        Parameter no_delay is True when device_event_reachable is sent.
+        """Update the sensor's state.
         """
         self.hass.add_job(self.async_update_ha_state(self.async_update))
-
-        @callback
-        def scheduled_update(now):  # pylint: disable=unused-argument
-            """Timer callback for sensor update."""
-            self.cancel_scheduled_update = None

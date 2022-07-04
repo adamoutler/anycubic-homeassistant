@@ -45,13 +45,14 @@
   },
   // Add the IDs of extensions you want installed when the container is created.
   "extensions": [
-    "ms-python.vscode-pylance",
-    "visualstudioexptteam.vscodeintellicode",
-    "esbenp.prettier-vscode",
-    "xirider.livecode",
-    "the-compiler.python-tox",
-    "ms-python.python"
-  ],
+	"ms-python.vscode-pylance",
+	"visualstudioexptteam.vscodeintellicode",
+	"esbenp.prettier-vscode",
+	"xirider.livecode",
+	"the-compiler.python-tox",
+	"ms-python.python",
+	"GitHub.copilot"
+],
   "containerEnv": {
     "PYTHONPATH ": "/workspaces/anycubic-python/src",
     "MY_CONTAINER_VAR2": "${localEnv:SOME_LOCAL_VAR}"
