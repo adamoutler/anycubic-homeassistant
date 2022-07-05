@@ -28,13 +28,14 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     monox: MonoXAPIAdapter
     reported_status: MonoXStatus = None
     reported_status_extras = {}
-    sysinfo: MonoXSysInfo = None
+    sysinfo: MonoXSysInfo = MonoXSysInfo()
     measure_elapsed_in_seconds = False
     config_entry: ConfigEntry
 
     def __init__(self, hass: HomeAssistant, monox: MonoXAPIAdapter,
                  config_entry: ConfigEntry) -> None:
         """Initialzie Update Cordinator"""
+
         super().__init__(
             hass,
             _LOGGER,
@@ -44,6 +45,7 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         )
         self.config_entry = config_entry
         self.monox = monox
+        _LOGGER.info("Registering %s", self.monox.ip_address)
 
     @callback
     async def update(self) -> None:
@@ -65,7 +67,7 @@ class AnycubicDataBridge(DataUpdateCoordinator):
                     _LOGGER.info("Set up %s complete.", self.monox.ip_address)
                 else:
                     _LOGGER.error("Device offline: %s", self.monox.ip_address)
-            getstatus: MonoXStatus =self.monox.getstatus()
+            getstatus: MonoXStatus = self.monox.getstatus()
             if getstatus is not None:
                 self.reported_status = getstatus
                 self.reported_status_extras = _parse_status_extras(

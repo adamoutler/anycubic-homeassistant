@@ -1,6 +1,5 @@
 """Config flow for Anycubic 3D Printer."""
 from __future__ import annotations
-import asyncio
 
 import logging
 from typing import Any
@@ -121,13 +120,10 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self.discovery_schema = {
             vol.Required(CONF_HOST, default=device[CONF_HOST]): str,
         }
-        try:
-            adapter = MonoXAPIAdapter(device[CONF_HOST])
-            system_information = adapter.sysinfo()
-            device.update(self.map_sysinfo_to_data(system_information))
-        except (Exception) as ex:
-            _LOGGER.exception(ex)
-            return
+        adapter = MonoXAPIAdapter(device[CONF_HOST])
+        system_information = adapter.sysinfo()
+        device.update(self.map_sysinfo_to_data(system_information))
+
         self._abort_if_unique_id_configured(updates={
             CONF_HOST: device[CONF_HOST],
         })

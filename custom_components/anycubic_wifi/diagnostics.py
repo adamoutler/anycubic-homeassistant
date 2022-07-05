@@ -16,7 +16,7 @@ async def async_get_config_entry_diagnostics(
         hass: HomeAssistant, config_entry: ConfigEntry) -> dict:
     """Return diagnostics for a config entry."""
     bridge: AnycubicDataBridge = hass.data[DOMAIN][
-        config_entry.entry_id]["bridge"]
+        config_entry.entry_id]["coordinator"]
 
     diagnostics_data = {
         "printer": bridge.monox.__dict__,
