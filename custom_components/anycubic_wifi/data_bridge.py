@@ -32,9 +32,11 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     # Certain MonoX devices measure elapsed time in seconds, while others measure
     # time in minutes.
     _measure_elapsed_in_seconds = False
+
     # Mono X API Adapter provides limited access to the MonoX API and performs
     # minimal parsing on the data before it is passed to the data bridge.
     _monox: MonoXAPIAdapter
+
     # The config entry is held to provde Unique ID for the Device object.
     _config_entry: ConfigEntry
 

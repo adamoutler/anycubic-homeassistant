@@ -2,6 +2,7 @@
 from __future__ import annotations
 from datetime import timedelta
 import logging
+import os
 
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
@@ -73,6 +74,16 @@ class MonoXSensor(SensorEntity, AnycubicEntityBaseDecorator, RestoreEntity):
 
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN,
                                                           entry.unique_id)})
+
+    @property
+    def _attr_entity_picture(self):
+        """Return the entity picture."""
+        if ('model' in self.entry.data
+                and str(self.entry.data["model"]).startswith("Photon Mono X")):
+            dirname = os.path.dirname(__file__)
+            filename = os.path.join(dirname, 'img/MonoX6k.b64')
+            file = open(filename, "r", encoding="utf-8")
+            return file.read()
 
     @property
     def available(self) -> bool:
