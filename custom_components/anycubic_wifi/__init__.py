@@ -32,8 +32,8 @@ async def async_setup(hass: HomeAssistant, processed: ConfigType) -> bool:
         component could use this to pass true/false or throw a
         ConfigEntryAuthFailed, ConfigEntryNotReady or other exception to
         indicate that the entry is unable to initialize.
-    :hass: HomeAssistant api reference to all of the Home Assistant data.
-    :processed: A dictionary of items which have already been setup by
+    :param hass: HomeAssistant api reference to all of the Home Assistant data.
+    :param processed: A dictionary of items which have already been setup by
         config_entries.py. This can be used to provide an order to the setup of
         the integration.
     :returns: True if the setup was successful. If we cannot access the data,
@@ -47,8 +47,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entries are setup. Start by setting up data location and polling time
         deltas, and then establish the data bridge to the 3D printer. The first
         data refresh action occurs, then the sensors are setup.
-    :hass: HomeAssistant api reference to all of the Home Assistant data.
-    :entry: The config entry to setup.
+    :param hass: HomeAssistant api reference to all of the Home Assistant data.
+    :param entry: The config entry to setup.
     :returns: True if the setup was successful. This will always be successful
         barring problems with Home Assistant or the underlying APIs. In the
         event a communication-type excepiton occurs, Home Assistant will
@@ -59,8 +59,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry_location[CONF_SCAN_INTERVAL] = poll_delta
 
     bridge = get_new_data_bridge(hass, entry)
-    entry_location["coordinator"] = bridge
     await bridge.async_config_entry_first_refresh()
+    entry_location["coordinator"] = bridge
 
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     return True
@@ -72,8 +72,8 @@ def get_new_data_bridge(hass, entry) -> AnycubicDataBridge:
         data collection and preparation for the sensor entities. The bridge
         follows the Python bridge design pattern and is the action component
         for the Coordinator component.
-    :hass: HomeAssistant api reference to all of the Home Assistant data.
-    :entry: The config entry of item being setup.
+    :param hass: HomeAssistant api reference to all of the Home Assistant data.
+    :param entry: The config entry of item being setup.
     :returns: The data bridge for the given config entry.
     """
 
@@ -87,8 +87,8 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
         live configuration updates are handled. The procedure for this
         particular integration is to simply refresh the entity. Refresh
         occurs by removing the existing entity and creating a new one.
-    :hass: HomeAssistant api reference to all of the Home Assistant data.
-    :entry: The config entry of item being setup."""
+    :param hass: HomeAssistant api reference to all of the Home Assistant data.
+    :param entry: The config entry of item being setup."""
     hass.data[DOMAIN].pop(entry.entry_id)
     await async_setup_entry(hass, entry)
     await hass.config_entries.async_reload(entry.entry_id)
@@ -101,8 +101,8 @@ def get_existing_bridge(hass: HomeAssistant,
         data collection and preparation for the sensor entities. The bridge
         follows the Python bridge design pattern and is the action component
         for the Coordinator component.
-    :hass: HomeAssistant api reference to all of the Home Assistant data.
-    :entry: The config entry of item being setup.
+    :param hass: HomeAssistant api reference to all of the Home Assistant data.
+    :param entry: The config entry of item being setup.
     :returns: The data bridge for the given config entry."""
     bridge: AnycubicDataBridge = hass.data[DOMAIN][
         entry.entry_id]["coordinator"]
@@ -110,9 +110,10 @@ def get_existing_bridge(hass: HomeAssistant,
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload the provided config entry. This is a sad procedure. :(
-    :hass: HomeAssistant api reference to all of the Home Assistant data.
-    :entry: The config entry of item being setup."""
+    """Unload the provided config entry. This is a sad procedure. We will clean
+        up the mess we made, and Home Assistant will remove the assigned entries.
+    :param hass: HomeAssistant api reference to all of the Home Assistant data.
+    :param entry: The config entry of item being setup. """
     if unload_ok := await hass.config_entries.async_unload_platforms(
             entry, PLATFORMS):
         hass.data[DOMAIN].pop(entry.entry_id)

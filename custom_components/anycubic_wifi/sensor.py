@@ -15,7 +15,6 @@ from .data_bridge import AnycubicDataBridge
 
 from .base_entry_decorator import AnycubicEntityBaseDecorator
 from .const import (
-    CONF_MODEL,
     DOMAIN,
     PRINTER_ICON,
     POLL_INTERVAL,
@@ -69,20 +68,25 @@ class MonoXSensor(SensorEntity, AnycubicEntityBaseDecorator, RestoreEntity):
         self.entry = entry
         self.hass = hass
 
-        if not self.name:
-            self._attr_name = entry.data[CONF_MODEL]
+        # if not self.name:
+        #     self._attr_name = entry.data[CONF_MODEL]
 
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN,
                                                           entry.unique_id)})
 
     @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return hasattr(self.bridge.data, "status")
+
+    @property
     def extra_state_attributes(self):
-        return self.bridge.reported_status_extras
+        return self.bridge.get_last_status_extras()
 
     @property
     def native_value(self):
         """Return sensor state."""
-        return self.coordinator.reported_status.status
+        return self.coordinator.data.status
 
     async def async_added_to_hass(self):
         """Set up previous values when the device is added to Home Assiatant.

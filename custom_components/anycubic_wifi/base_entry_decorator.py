@@ -5,10 +5,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from uart_wifi.response import MonoXStatus
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import OFFLINE_STATUS
 
 from . import AnycubicDataBridge
 
@@ -32,14 +30,6 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge]):
         self.async_on_remove(
             async_dispatcher_connect(self.hass, "unload",
                                      self.update_callback))
-
-    @property
-    def available(self) -> bool:
-        """Return if entity is available."""
-        if (self.bridge is None
-                or not isinstance(self.bridge.reported_status, MonoXStatus)):
-            return False
-        return self.bridge.reported_status.status is not OFFLINE_STATUS.status
 
     @callback
     async def update_callback(self) -> None:

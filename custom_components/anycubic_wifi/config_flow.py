@@ -6,7 +6,7 @@ from typing import Any
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components import dhcp
-from homeassistant.const import CONF_HOST, CONF_NAME
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_MODEL
 from homeassistant.data_entry_flow import FlowResult
 from uart_wifi.response import MonoXSysInfo
 from uart_wifi.errors import ConnectionException
@@ -15,7 +15,6 @@ from .errors import AnycubicException
 from .mono_x_api_adapter_fascade import MonoXAPIAdapter
 
 from .const import (
-    CONF_MODEL,
     CONF_SERIAL,
     DOMAIN,
 )

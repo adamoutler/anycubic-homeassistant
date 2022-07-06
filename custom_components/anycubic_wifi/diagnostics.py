@@ -19,8 +19,10 @@ async def async_get_config_entry_diagnostics(
         config_entry.entry_id]["coordinator"]
 
     diagnostics_data = {
-        "printer": bridge.monox.__dict__,
-        "anycubic_data_bridge": bridge.__dict__
+        config_entry.entry_id: {
+            "printer": bridge.get_printer().__dict__,
+            "anycubic_data_bridge": bridge.__dict__
+        }
     }
 
     return diagnostics_data

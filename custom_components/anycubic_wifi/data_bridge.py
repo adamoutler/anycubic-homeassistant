@@ -1,165 +1,135 @@
 """Update coordinator"""
 from datetime import timedelta
 import logging
-import time
 from typing import cast
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.core import callback
 
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.core import HomeAssistant
-from uart_wifi.response import MonoXSysInfo
-from uart_wifi.response import MonoXStatus
 from uart_wifi.errors import ConnectionException
 from .errors import AnycubicException
-from .const import (POLL_INTERVAL, TYPE_INT, TYPE_STRING, TYPE_FLOAT,
-                    ATTR_MANUFACTURER, TYPE_ML, ATTR_REMAINING_LAYERS,
-                    TYPE_TIME, ATTR_TOTAL_TIME, DOMAIN, OFFLINE_STATUS,
-                    SUGGESTED_AREA, TRANSLATION_ATTRIBUTES)
+from .const import (POLL_INTERVAL, ATTR_MANUFACTURER, DOMAIN, SUGGESTED_AREA)
 from .mono_x_api_adapter_fascade import MonoXAPIAdapter
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class AnycubicDataBridge(DataUpdateCoordinator):
-    """Coordinator for data updates"""
-    monox: MonoXAPIAdapter
-    reported_status: MonoXStatus = None
-    reported_status_extras = {}
-    sysinfo: MonoXSysInfo = MonoXSysInfo()
-    measure_elapsed_in_seconds = False
-    config_entry: ConfigEntry
+    """The DataBridge is a coordinator that updates the data from the API.
+    The purpose of the DataBridge is to provide a single point of access to
+    the data from the API. This is done by using the built-in methods provided
+    by the DataUpdateCoordinator. The DataBridge is responsible for outputting
+    requests to the MonoX API and parsing the responses. The DataBridge is
+    also responsible for handling the errors that may occur during the update
+    process. """
+
+    # Reported status extras is parsed from the status object and contains
+    # extra state attributes for the sensor.
+    _reported_status_extras = {}
+
+    # Certain MonoX devices measure elapsed time in seconds, while others measure
+    # time in minutes.
+    _measure_elapsed_in_seconds = False
+    # Mono X API Adapter provides limited access to the MonoX API and performs
+    # minimal parsing on the data before it is passed to the data bridge.
+    _monox: MonoXAPIAdapter
+    # The config entry is held to provde Unique ID for the Device object.
+    _config_entry: ConfigEntry
+
+    # debounce counter accounts for the fact that the device has poor wifi connectivity.
+    _debounce_counter = 0
 
     def __init__(self, hass: HomeAssistant, monox: MonoXAPIAdapter,
                  config_entry: ConfigEntry) -> None:
-        """Initialzie Update Cordinator"""
+        """Initialize the DataBridge.  Here we initialize the coordinator
+        and set up the variables that will be used to update the data.
+        :param hass: HomeAssistant the Home Assistant instance
+        :param monox: MonoXAPIAdapter The MonoX API Adapter Fascade.
+        :param config_entry: ConfigEntry The config entry for the device.
+        """
 
+        _LOGGER.info("Registering %s", monox.ip_address)
         super().__init__(
             hass,
             _LOGGER,
-            name=f"anycubic-{config_entry.entry_id}",
+            name=f"anycubic-{monox.ip_address}",
             update_method=self._async_update_data,
             update_interval=timedelta(seconds=POLL_INTERVAL),
         )
-        self.config_entry = config_entry
-        self.monox = monox
-        _LOGGER.info("Registering %s", self.monox.ip_address)
-
-    @callback
-    async def update(self) -> None:
-        """refresh data"""
-        _LOGGER.debug("Update Called")
-        self._async_update_data()
+        self._config_entry = config_entry
+        self._monox = monox
+        self.data = {"status": "offline"}
 
     async def _async_update_data(self):
-        """Update data via API."""
-        _LOGGER.debug("Updating data")
+        """Update data via API. On the first sync this method will provide
+        device information by establishing the system information, then provide
+        deivce status.  On subsequent syncs, this method will provide device status.
+        Failures to obtain data will result in the DataBridge being marked as
+        offline. The sensor will respond to offline status as being unavailble."""
         try:
-            if (not self.sysinfo or not getattr(self.sysinfo, "model")):
-                _LOGGER.info("Setting up %s", self.monox.ip_address)
-
-                info = self.monox.sysinfo()
-                if hasattr(info, "model"):
-                    self.sysinfo = info
-                    self.measure_elapsed_in_seconds = "6K" in info.model
-                    _LOGGER.info("Set up %s complete.", self.monox.ip_address)
-                else:
-                    _LOGGER.error("Device offline: %s", self.monox.ip_address)
-            getstatus: MonoXStatus = self.monox.getstatus()
-            if getstatus is not None:
-                self.reported_status = getstatus
-                self.reported_status_extras = _parse_status_extras(
-                    getstatus, self.measure_elapsed_in_seconds)
+            [current_status, extras] = self._monox.get_current_status(
+                use_seconds=self._measure_elapsed_in_seconds)
+            if (current_status):
+                self._debounce_reset()
+                self._reported_status_extras.update(extras)
+                return current_status
         except (AnycubicException, ConnectionException,
-                ConnectionRefusedError) as ex:
-            _LOGGER.warning('exception during update on %s: %s',
-                            self.monox.ip_address, ex)
-            self.reported_status = OFFLINE_STATUS
-            self.reported_status_extras = {}
-        if (self.reported_status is None
-                or not hasattr(self.reported_status, "status")
-                or not isinstance(self.reported_status, MonoXStatus)):
-            self.reported_status = OFFLINE_STATUS
-            self.reported_status_extras = {}
-        _LOGGER.debug("Update complete")
-        self.reported_status_extras.update({"ip": self.monox.ip_address})
+                ConnectionRefusedError):
+            # This is probably an API error, these devices have poor
+            # wifi connectivity and are often offline.
+            pass
+
+        # Did not obtain a status, so we MAY be offline. The device
+        # can be offline, or wifi is resetting. So we debounce for
+        # three tries before reporting offline status.
+        return self._offline_debounce()
+
+    def _debounce_reset(self):
+        """We received a message. Reset the debounce counter."""
+        self._debounce_counter = 0
+
+    def _offline_debounce(self):
+        """Due to the intermittent connectivity issues, offline status
+        requires debounce. Increment the debounce counter. If the counter
+        is greater than zero, the device is considered offline. If the
+        counter is greater than 3 then we raise an exception indicating to
+        Home Assistant, the device is offline."""
+        self._debounce_counter += 1
+        if self._debounce_counter > 3:
+            raise UpdateFailed("Failed to obtain status from device.")
+        return self.data
+
+    def get_last_status_extras(self):
+        """"Return the last status extras for the sensor."""
+        return self._reported_status_extras
+
+    def get_printer(self):
+        """Return the printer api for diagnostics."""
+        return self._monox
 
     @property
     def device_info(self) -> DeviceInfo:
         """Device info."""
-        unique_id = cast(str, self.config_entry.unique_id)
+        unique_id = cast(str, self._config_entry.unique_id)
 
         try:
             return DeviceInfo(identifiers={(DOMAIN, unique_id)},
                               manufacturer=ATTR_MANUFACTURER,
-                              connections=[("serial", self.sysinfo.serial)],
+                              connections=[
+                                  ("serial",
+                                   self.config_entry.data["serial_number"])
+                              ],
                               suggested_area=SUGGESTED_AREA,
-                              sw_version=self.sysinfo.firmware,
-                              hw_version=self.monox.ip_address,
-                              supported_features=self.monox.ip_address,
-                              model=self.sysinfo.model,
+                              sw_version=self.config_entry.data["sw_version"],
+                              hw_version=self._monox.ip_address,
+                              supported_features=self._monox.ip_address,
+                              model=self.config_entry.data["model"],
                               name=ATTR_MANUFACTURER + " " +
-                              self.sysinfo.model + " " +
-                              self.sysinfo.serial[-4:4])
+                              self.config_entry.data["model"] + " " +
+                              self.config_entry.data["serial_number"][-4:4])
 
         except AttributeError as ex:
             _LOGGER.debug(ex)
         return DeviceInfo(manufacturer=ATTR_MANUFACTURER)
-
-    @property
-    def product_name(self):
-        return "asldkfjaslkdfjzxcv zxcvzxcvzx"
-
-
-def _seconds_to_hhmmss(raw_value):
-    gmt_time = time.gmtime(int(raw_value))
-    hhmmss = time.strftime('%H:%M:%S', gmt_time)
-    return hhmmss
-
-
-def _parse_status_extras(stat: MonoXStatus, use_seconds: bool) -> dict:
-    """Handle status for Mono X getstatus message"""
-    extras = {}
-
-    if not stat or not hasattr(stat, "status"):
-        return
-    if hasattr(stat, 'seconds_remaining') and use_seconds:
-        remain = int(stat.seconds_remaining)
-        stat.seconds_remaining = int(remain / 60)
-
-    for [internal_attr, hass_attr, handling] in TRANSLATION_ATTRIBUTES:
-        if hasattr(stat, internal_attr):
-            raw_value = getattr(stat, internal_attr)
-            #Can't wait for Python 3.10!
-            if handling == TYPE_ML:
-                raw_value = raw_value.replace(TYPE_ML, "").replace("~", "")
-                extras[hass_attr] = int(raw_value)
-            elif handling == TYPE_INT:
-                extras[hass_attr] = int(raw_value)
-            elif handling == TYPE_FLOAT:
-                extras[hass_attr] = float(raw_value)
-            elif handling == TYPE_TIME:
-                extras[hass_attr] = _seconds_to_hhmmss(raw_value)
-            elif handling == TYPE_STRING:
-                extras[hass_attr] = raw_value
-            else:
-                extras[hass_attr] = raw_value
-        else:
-            extras[hass_attr] = None
-
-    if hasattr(stat, 'current_layer') and hasattr(stat, 'total_layers'):
-        total = int(stat.total_layers)
-        current = int(stat.current_layer)
-        extras[ATTR_REMAINING_LAYERS] = int(total - current)
-    else:
-        extras[ATTR_REMAINING_LAYERS] = None
-    if hasattr(stat, 'seconds_elapse') and hasattr(stat, 'seconds_remaining'):
-        remain = int(stat.seconds_remaining)
-        elapsed = int(stat.seconds_elapse)
-        extras[ATTR_TOTAL_TIME] = _seconds_to_hhmmss(elapsed - remain)
-    else:
-        extras[ATTR_TOTAL_TIME] = None
-
-    return extras
