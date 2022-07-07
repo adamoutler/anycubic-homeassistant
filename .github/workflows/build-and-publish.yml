@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: "actions/checkout@v2"
       - uses: "home-assistant/actions/hassfest@master"
-  hacs validation:
+  hacs-validation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
