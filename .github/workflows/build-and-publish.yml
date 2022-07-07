@@ -1,21 +1,27 @@
-name: Build anycubic-python 🐍 distributions
-
-on: push
-
+name: Validate with hassfest
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 0 * * *"
 jobs:
+  validate:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v2"
+      - uses: "home-assistant/actions/hassfest@master"
   pylint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pylint
-    - name: Analysing the code with pylint
-      run: |
-        find . -name '*.py' -exec pylint {} \;
-  
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
+      - name: Analysing the code with pylint
+        run: |
+          find . -name '*.py' -exec pylint {} \;
