@@ -15,16 +15,6 @@
       "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
       "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]",
       "unknown": "[%key:common::config_flow::error::unknown%]"
-    },
-    "options": {
-      "step": {
-        "configure_stream": {
-          "data": {
-            "stream_profile": "Select stream profile to use"
-          },
-          "title": "Axis device video stream options"
-        }
-      }
     }
   }
 }

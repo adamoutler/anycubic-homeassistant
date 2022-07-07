@@ -25,3 +25,7 @@ jobs:
       - name: Analysing the code with pylint
         run: |
           find . -name '*.py' -exec pylint {} \;
+      - name: HACS validation
+        uses: "hacs/action@main"
+        with:
+          category: "CHANGE_ME!"
