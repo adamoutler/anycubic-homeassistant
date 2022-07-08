@@ -2,16 +2,14 @@
 from __future__ import annotations
 from datetime import timedelta
 import logging
-import os
 
-from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components.sensor import SensorEntity
-
+from .img.image import MONO_X_IMAGE
 from .data_bridge import AnycubicDataBridge
 
 from .base_entry_decorator import AnycubicEntityBaseDecorator
@@ -26,13 +24,12 @@ _LOGGER = logging.getLogger(__name__)
 SCAN_INTERVAL = timedelta(seconds=POLL_INTERVAL)
 
 
-async def async_setup(entry: config_entries.ConfigEntry) -> None:
+async def async_setup(entry: ConfigEntry) -> None:
     """The setup method"""
     _LOGGER.debug(entry)
 
 
-async def async_setup_entry(hass: HomeAssistant,
-                            entry: config_entries.ConfigEntry,
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
                             async_add_entities: AddEntitiesCallback) -> None:
     """Set up the platform from config_entry."""
     coordinator: AnycubicDataBridge = hass.data[DOMAIN][
@@ -43,8 +40,6 @@ async def async_setup_entry(hass: HomeAssistant,
         """Add sensor from Anycubic device."""
         the_sensor = MonoXSensor(bridge=coordinator, hass=hass, entry=entry)
         async_add_entities([the_sensor])
-        entry.async_on_unload(
-            entry.add_update_listener(the_sensor.async_update))
 
     await async_add_sensor()
     return
@@ -80,10 +75,7 @@ class MonoXSensor(SensorEntity, AnycubicEntityBaseDecorator, RestoreEntity):
         """Return the entity picture."""
         if ('model' in self.entry.data
                 and str(self.entry.data["model"]).startswith("Photon Mono X")):
-            dirname = os.path.dirname(__file__)
-            filename = os.path.join(dirname, 'img/MonoX6k.b64')
-            file = open(filename, "r", encoding="utf-8")
-            return file.read()
+            return MONO_X_IMAGE
 
     @property
     def available(self) -> bool:
@@ -114,8 +106,5 @@ class MonoXSensor(SensorEntity, AnycubicEntityBaseDecorator, RestoreEntity):
         if last_extras is not None and "last_extras" in last_state:
             self.coordinator.reported_status_extras = last_extras
 
-    @callback
-    async def update_callback(self) -> None:
-        """Update the sensor's state.
-        """
-        self.hass.add_job(self.async_update_ha_state(self.async_update))
+
+

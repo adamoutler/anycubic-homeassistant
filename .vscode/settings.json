@@ -5,7 +5,9 @@
   "python.analysis.logLevel": "Trace",
   "python.analysis.watchSearchPaths": true,
   "python.defaultInterpreterPath": "/usr/local/bin/python3",
-  "python.autoComplete.extraPaths": ["/workspaces/anycubic-python/custom_components/anycubic_wifi"],
+  "python.autoComplete.extraPaths": [
+    "/workspaces/anycubic-python/custom_components/anycubic_wifi"
+  ],
   "cSpell.words": [
     "adamoutler",
     "gopause",
@@ -21,8 +23,9 @@
     "Zhome",
     "Zmove"
   ],
-  "python.analysis.extraPaths": [
-    "/workspaces/anycubic-python/src"
-  ],
-  "python.formatting.provider": "yapf"
+  "python.analysis.extraPaths": ["/workspaces/anycubic-python/src"],
+  "python.formatting.provider": "yapf",
+  "files.associations": {
+    "*.yaml": "home-assistant"
+  }
 }

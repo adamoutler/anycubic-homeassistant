@@ -8,12 +8,13 @@ from homeassistant import config_entries
 from homeassistant.components import dhcp
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_MODEL
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.core import callback
 from uart_wifi.response import MonoXSysInfo
 from uart_wifi.errors import ConnectionException
 from .const import SW_VERSION
 from .errors import AnycubicException
 from .mono_x_api_adapter_fascade import MonoXAPIAdapter
-
+from .options import AnycubicOptionsFlowHandler
 from .const import (
     CONF_SERIAL,
     DOMAIN,
@@ -34,6 +35,12 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a Anycubic config flow."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        """Create the options flow."""
+        return AnycubicOptionsFlowHandler(config_entry)
 
     def __init__(self) -> None:
         """Initialize the Anycubic MonoX config flow."""
@@ -81,6 +88,7 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 system_information = adapter.sysinfo()
                 if system_information is None:
                     return
+
                 self.data[CONF_HOST] = discovered_information[CONF_HOST]
 
                 self.data.update(self.map_sysinfo_to_data(system_information))
@@ -113,12 +121,12 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data[CONF_SERIAL] = sysinfo.serial
         return data
 
-    #https://github.com/home-assistant/core/blob/dev/homeassistant/components/axis/config_flow.py#L194
     async def _process_discovered_device(self, device: dict) -> Any:
         """Prepare configuration for a discovered Anycubic device."""
         self.discovery_schema = {
             vol.Required(CONF_HOST, default=device[CONF_HOST]): str,
         }
+
         adapter = MonoXAPIAdapter(device[CONF_HOST])
         system_information = adapter.sysinfo()
         device.update(self.map_sysinfo_to_data(system_information))

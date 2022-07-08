@@ -1,13 +1,9 @@
-# Configure a default setup of Home Assistant (frontend, api, etc)
+# Loads default set of integrations. Do not remove.
 default_config:
 
 # Text to speech
 tts:
   - platform: google_translate
-
-automation: !include automations.yaml
-script: !include scripts.yaml
-scene: !include scenes.yaml
 homeassistant:
   auth_providers:
     - type: trusted_networks
@@ -15,7 +11,6 @@ homeassistant:
         - 0.0.0.0/0
       allow_bypass_login: true
     - type: homeassistant
-logger:
-  default: info
-  logs:
-    custom_components.anycubic_wifi: debug
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml

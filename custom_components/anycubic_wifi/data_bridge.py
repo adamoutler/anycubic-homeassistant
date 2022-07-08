@@ -27,11 +27,11 @@ class AnycubicDataBridge(DataUpdateCoordinator):
 
     # Reported status extras is parsed from the status object and contains
     # extra state attributes for the sensor.
-    _reported_status_extras = {}
+    _reported_status_extras: dict = {}
 
     # Certain MonoX devices measure elapsed time in seconds, while others measure
     # time in minutes.
-    _measure_elapsed_in_seconds = False
+    _measure_elapsed_in_seconds: bool = False
 
     # Mono X API Adapter provides limited access to the MonoX API and performs
     # minimal parsing on the data before it is passed to the data bridge.
@@ -41,7 +41,10 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     _config_entry: ConfigEntry
 
     # debounce counter accounts for the fact that the device has poor wifi connectivity.
-    _debounce_counter = 0
+    _debounce_counter: int = 0
+
+    #When polling sensor status, also pull the device extras.
+    _use_extras: bool = True
 
     def __init__(self, hass: HomeAssistant, monox: MonoXAPIAdapter,
                  config_entry: ConfigEntry) -> None:
@@ -63,6 +66,9 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         self._config_entry = config_entry
         self._monox = monox
         self.data = {"status": "offline"}
+        self._use_extras = True
+        self._use_extras = not (hasattr(config_entry.options, "no_extras") or
+                                config_entry.options.get("no_extras") is True)
 
     async def _async_update_data(self):
         """Update data via API. On the first sync this method will provide
@@ -72,10 +78,14 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         offline. The sensor will respond to offline status as being unavailble."""
         try:
             [current_status, extras] = self._monox.get_current_status(
-                use_seconds=self._measure_elapsed_in_seconds)
-            if (current_status):
+                use_seconds=self._measure_elapsed_in_seconds,
+                use_extras=self._use_extras)
+            if current_status:
                 self._debounce_reset()
-                self._reported_status_extras.update(extras)
+                if self._use_extras:
+                    self._reported_status_extras.update(extras)
+                else:
+                    self._reported_status_extras = {}
                 return current_status
         except (AnycubicException, ConnectionException,
                 ConnectionRefusedError):
@@ -110,6 +120,10 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     def get_printer(self):
         """Return the printer api for diagnostics."""
         return self._monox
+
+    def set_use_extras(self, use_extras: bool):
+        """Set the use_extras flag."""
+        self._use_extras = use_extras
 
     @property
     def device_info(self) -> DeviceInfo:

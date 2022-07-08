@@ -32,7 +32,8 @@ class MonoXAPIAdapter(UartWifi):
         self.port = port
 
     def get_current_status(
-            self, use_seconds: bool) -> Union[MonoXStatus, dict] | bool:
+            self, use_seconds: bool,
+            use_extras: bool) -> Union[MonoXStatus, dict] | bool:
         """Get the MonoX Status.  Waits for a maximum of 5 seconds.
         :returns: MonoXStatus or none."""
         try:
@@ -41,7 +42,9 @@ class MonoXAPIAdapter(UartWifi):
             status: MonoXStatus = find_response_of_type(
                 response=respone_stream, expected_type=MonoXStatus)
             if status:
-                extras = parse_extras(status, use_seconds)
+                extras = {}
+                if (use_extras):
+                    extras = parse_extras(status, use_seconds)
                 return (status, extras)
         finally:
             # We close the telnet socket here because the device has limited

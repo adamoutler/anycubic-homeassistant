@@ -6,7 +6,7 @@
     "dockerfile": "Dockerfile",
     "context": "..",
     "args": {
-      "VARIANT": "3.9-buster",
+      "VARIANT": "3.10-buster",
       "NODE_VERSION": "lts/*"
     }
   },
@@ -45,15 +45,16 @@
   },
   // Add the IDs of extensions you want installed when the container is created.
   "extensions": [
-	"ms-python.vscode-pylance",
-	"visualstudioexptteam.vscodeintellicode",
-	"esbenp.prettier-vscode",
-	"xirider.livecode",
-	"the-compiler.python-tox",
-	"ms-python.python",
-	"GitHub.copilot",
-	"GitHub.vscode-pull-request-github"
-],
+    "ms-python.vscode-pylance",
+    "visualstudioexptteam.vscodeintellicode",
+    "esbenp.prettier-vscode",
+    "xirider.livecode",
+    "the-compiler.python-tox",
+    "ms-python.python",
+    "GitHub.copilot",
+    "GitHub.vscode-pull-request-github",
+    "keesschollaart.vscode-home-assistant"
+  ],
   "containerEnv": {
     "PYTHONPATH ": "/workspaces/anycubic-python/src",
     "MY_CONTAINER_VAR2": "${localEnv:SOME_LOCAL_VAR}"
