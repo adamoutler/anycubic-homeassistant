@@ -13,7 +13,7 @@ from uart_wifi.response import MonoXSysInfo
 from uart_wifi.errors import ConnectionException
 from .const import SW_VERSION
 from .errors import AnycubicException
-from .mono_x_api_adapter_fascade import MonoXAPIAdapter
+from .adapter_fascade import MonoXAPIAdapter
 from .options import AnycubicOptionsFlowHandler
 from .const import (
     CONF_SERIAL,

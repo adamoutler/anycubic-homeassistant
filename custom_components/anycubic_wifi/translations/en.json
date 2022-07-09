@@ -16,7 +16,9 @@
       "init": {
         "title": "Anycubic Wifi Config",
         "data": {
-          "no_extras": "Turn off sensor extras to save database space."
+          "no_extras": "Turn off sensor extras to save database space. (requires restart)",
+          "extra_sensors": "Create one sensor for each value from the status message from the device.  These values will remain unavailable whenever the device is not printing. (requires restart)",
+          "hide_ip": "Hide the device IP address from the sensor extras. (requires restart)"
         }
       }
     }

@@ -1,6 +1,7 @@
 """Constants for the Anycubic 3D Printer integration."""
 
 from homeassistant.const import Platform
+from uart_wifi.communication import MonoXStatus
 
 DOMAIN = "anycubic_wifi"
 PLATFORMS: list[Platform] = [Platform.SENSOR]
@@ -24,7 +25,9 @@ TYPE_TIME = 'time'
 TYPE_INT = 'int'
 TYPE_ML = 'mL'
 TYPE_FLOAT = "float"
-ATTR_LOOKUP_TABLE = [["file", "file", TYPE_STRING],
+TYPE_FILE = "file"
+INTERNAL_FILE = "Internal File Name"
+ATTR_LOOKUP_TABLE = [["file", "file", TYPE_FILE],
                      ["current_layer", "Current Layers", TYPE_INT],
                      ["total_layers", "Total Layers", TYPE_INT],
                      ["layer_height", "Layer Height mm", TYPE_FLOAT],
@@ -37,3 +40,4 @@ ATTR_LOOKUP_TABLE = [["file", "file", TYPE_STRING],
                      ["unknown2", "unknown_2", TYPE_STRING]]
 ATTR_REMAINING_LAYERS = "layers_remain_num"
 ATTR_TOTAL_TIME = "total_print_time"
+OFFLINE_STATUS = MonoXStatus("getstatus,offline,end")

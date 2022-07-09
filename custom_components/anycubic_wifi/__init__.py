@@ -6,6 +6,15 @@ rendered by the sensor entity.
 The init.py file is the entry point for the integration. It is responsible for
 creating the integration representation in hass.data.
 """
+# pylint disable=anomalous-backslash-in-string
+
+# The overall project layout is as follows:
+#             Init Config Entry
+#                    \/
+#  Device Info < Data Bridge > adapter fascade > uart-wifi pip > 3D Printer
+#                    \/
+#               sensor entity
+
 from __future__ import annotations
 from datetime import timedelta
 from gc import callbacks
@@ -18,7 +27,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 from .data_bridge import AnycubicDataBridge
-from .mono_x_api_adapter_fascade import MonoXAPIAdapter
+from .adapter_fascade import MonoXAPIAdapter
 from .options import AnycubicOptionsFlowHandler
 from .const import (DOMAIN, PLATFORMS, POLL_INTERVAL, ANYCUBIC_WIFI_PORT)
 
@@ -83,8 +92,6 @@ def get_new_data_bridge(hass, entry) -> AnycubicDataBridge:
     api = MonoXAPIAdapter(entry.data[CONF_HOST], ANYCUBIC_WIFI_PORT)
     bridge = AnycubicDataBridge(hass, api, entry)
     return bridge
-
-
 
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:

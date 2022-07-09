@@ -22,11 +22,23 @@ class AnycubicOptionsFlowHandler(config_entries.OptionsFlow):
 
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema({
-                vol.Required(
-                    "no_extras",
-                    default=self.config_entry.options.get("no_extras"),
-                ):
-                bool
-            }),
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        "no_extras",
+                        default=self.config_entry.options.get("no_extras"),
+                    ):
+                    bool,
+                    vol.Required(
+                        "hide_ip",
+                        default=self.config_entry.options.get("hide_ip"),
+                    ):
+                    bool
+                    # ,
+                    # vol.Required(
+                    #     "extra_sensors",
+                    #     default=self.config_entry.options.get("extra_sensors"),
+                    # ):
+                    # bool
+                }, ),
         )

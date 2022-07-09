@@ -5,13 +5,15 @@ from typing import cast
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
-
+from homeassistant.const import (CONF_MODEL, ATTR_SW_VERSION, CONF_HOST)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.core import HomeAssistant
 from uart_wifi.errors import ConnectionException
+
 from .errors import AnycubicException
-from .const import (POLL_INTERVAL, ATTR_MANUFACTURER, DOMAIN, SUGGESTED_AREA)
-from .mono_x_api_adapter_fascade import MonoXAPIAdapter
+from .const import (CONF_SERIAL, POLL_INTERVAL, ATTR_MANUFACTURER, DOMAIN,
+                    SUGGESTED_AREA)
+from .adapter_fascade import MonoXAPIAdapter
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ class AnycubicDataBridge(DataUpdateCoordinator):
 
     # Certain MonoX devices measure elapsed time in seconds, while others measure
     # time in minutes.
-    _measure_elapsed_in_seconds: bool = False
+    _convert_seconds: bool = False
 
     # Mono X API Adapter provides limited access to the MonoX API and performs
     # minimal parsing on the data before it is passed to the data bridge.
@@ -40,11 +42,11 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     # The config entry is held to provde Unique ID for the Device object.
     _config_entry: ConfigEntry
 
-    # debounce counter accounts for the fact that the device has poor wifi connectivity.
-    _debounce_counter: int = 0
-
     #When polling sensor status, also pull the device extras.
     _use_extras: bool = True
+
+    #The Device IP address, added to extras.
+    _ip_address: dict = {CONF_HOST: ""}
 
     def __init__(self, hass: HomeAssistant, monox: MonoXAPIAdapter,
                  config_entry: ConfigEntry) -> None:
@@ -67,8 +69,14 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         self._monox = monox
         self.data = {"status": "offline"}
         self._use_extras = True
-        self._use_extras = not (hasattr(config_entry.options, "no_extras") or
-                                config_entry.options.get("no_extras") is True)
+        self._use_extras = not (hasattr(
+            config_entry.options, "no_extras")) and config_entry.options.get(
+                "no_extras", False)
+        self._hide_ip = config_entry.options.get("hide_ip", False)
+        self._ip_address = {
+            CONF_HOST: monox.ip_address if self._hide_ip else None
+        }
+        self._convert_seconds = "Mono X 6K" in config_entry.data["model"]
 
     async def _async_update_data(self):
         """Update data via API. On the first sync this method will provide
@@ -78,14 +86,18 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         offline. The sensor will respond to offline status as being unavailble."""
         try:
             [current_status, extras] = self._monox.get_current_status(
-                use_seconds=self._measure_elapsed_in_seconds,
+                convert_seconds=self._convert_seconds,
                 use_extras=self._use_extras)
             if current_status:
-                self._debounce_reset()
                 if self._use_extras:
+                    #update the data source status.
                     self._reported_status_extras.update(extras)
+                    #add the host to the extras if it's not already there.
+                    self._maybe_add_host_to_extras()
                 else:
-                    self._reported_status_extras = {}
+                    #no status.
+                    self._maybe_add_host_to_extras()
+
                 return current_status
         except (AnycubicException, ConnectionException,
                 ConnectionRefusedError):
@@ -93,28 +105,17 @@ class AnycubicDataBridge(DataUpdateCoordinator):
             # wifi connectivity and are often offline.
             pass
 
-        # Did not obtain a status, so we MAY be offline. The device
-        # can be offline, or wifi is resetting. So we debounce for
-        # three tries before reporting offline status.
-        return self._offline_debounce()
+        raise UpdateFailed("Failed to obtain status from device.")
 
-    def _debounce_reset(self):
-        """We received a message. Reset the debounce counter."""
-        self._debounce_counter = 0
-
-    def _offline_debounce(self):
-        """Due to the intermittent connectivity issues, offline status
-        requires debounce. Increment the debounce counter. If the counter
-        is greater than zero, the device is considered offline. If the
-        counter is greater than 3 then we raise an exception indicating to
-        Home Assistant, the device is offline."""
-        self._debounce_counter += 1
-        if self._debounce_counter > 3:
-            raise UpdateFailed("Failed to obtain status from device.")
-        return self.data
+    def _maybe_add_host_to_extras(self):
+        """If the extra data does not already contain the host, add it.
+        This is used to provide the host to the sensor extras."""
+        if not self._hide_ip and not hasattr(self._reported_status_extras,
+                                             CONF_HOST):
+            self._reported_status_extras.update(self._ip_address)
 
     def get_last_status_extras(self):
-        """"Return the last status extras for the sensor."""
+        """"provide a public method to give the last status extras for the sensor."""
         return self._reported_status_extras
 
     def get_printer(self):
@@ -125,26 +126,31 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         """Set the use_extras flag."""
         self._use_extras = use_extras
 
+
+# pylint: disable=anomalous-backslash-in-string
+
     @property
     def device_info(self) -> DeviceInfo:
-        """Device info."""
+        """Device info. This implements all the required attributes for the
+        device object. The device object is used by Home Assistant to provide
+        information about the device in the UI and in the Device Registry.
+        """
         unique_id = cast(str, self._config_entry.unique_id)
 
         try:
-            return DeviceInfo(identifiers={(DOMAIN, unique_id)},
-                              manufacturer=ATTR_MANUFACTURER,
-                              connections=[
-                                  ("serial",
-                                   self.config_entry.data["serial_number"])
-                              ],
-                              suggested_area=SUGGESTED_AREA,
-                              sw_version=self.config_entry.data["sw_version"],
-                              hw_version=self._monox.ip_address,
-                              supported_features=self._monox.ip_address,
-                              model=self.config_entry.data["model"],
-                              name=ATTR_MANUFACTURER + " " +
-                              self.config_entry.data["model"] + " " +
-                              self.config_entry.data["serial_number"][-4:4])
+            return DeviceInfo(
+                identifiers={(DOMAIN, unique_id)},
+                manufacturer=ATTR_MANUFACTURER,
+                connections=[(CONF_SERIAL, self.config_entry.data[CONF_SERIAL])
+                             ],
+                suggested_area=SUGGESTED_AREA,
+                sw_version=self.config_entry.data[ATTR_SW_VERSION],
+                supported_features=self._monox.ip_address,
+                model=self.config_entry.data[CONF_MODEL],
+                name=ATTR_MANUFACTURER + " " +
+                self.config_entry.data[CONF_MODEL] + " " +
+                self.config_entry.data[CONF_SERIAL][-4:4],
+            )
 
         except AttributeError as ex:
             _LOGGER.debug(ex)
