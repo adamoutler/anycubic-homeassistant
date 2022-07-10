@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any
 
+import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
@@ -17,9 +18,11 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import CONF_MODEL
 from .data_bridge import AnycubicDataBridge
 from .base_entry_decorator import AnycubicEntityBaseDecorator
-from .const import (DOMAIN, PRINTER_ICON, POLL_INTERVAL, ATTR_LOOKUP_TABLE)
+
+from .const import (DOMAIN, PRINTER_ICON, POLL_INTERVAL)
 
 SCAN_INTERVAL = timedelta(seconds=POLL_INTERVAL)
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
@@ -33,7 +36,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
         entry.entry_id]["coordinator"]
 
     @callback
-    async def async_add_sensor(sensor: Any) -> None:
+    async def async_add_sensor(sensor: Any, name: str, unit: str) -> None:
         """Add sensor from Anycubic device into the Home Assistant entity
         registry."""
 
@@ -41,7 +44,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
             MonoXSensor(bridge=coordinator,
                         hass=hass,
                         entry=entry,
-                        native_update=sensor)
+                        native_update=sensor,
+                        name=name,
+                        unit=unit)
         ])
 
     # extra_sensors = entry.options["extra_sensors"]
@@ -49,7 +54,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
     #     for (data, name, type) in ATTR_LOOKUP_TABLE:
     #         await async_add_sensor(coordinator.data[name])
     # else:
-    await async_add_sensor(coordinator.data.status)
+    await async_add_sensor("status", "status", "")
 
 
 class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
@@ -64,9 +69,11 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
     _attr_icon = PRINTER_ICON
     _attr_device_class = "3D Printer"
     should_poll = True
+    async_update_interval = SCAN_INTERVAL
 
     def __init__(self, bridge: AnycubicDataBridge, hass: HomeAssistant,
-                 entry: ConfigEntry, native_update: str) -> None:
+                 entry: ConfigEntry, native_update: str, name: str,
+                 unit: str) -> None:
         """Initialize the sensor.
         :coordinator: The data retrieval and storage for this sensor.
         :hass: A reference to Home Assistant.
@@ -77,14 +84,18 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
         self.native_update = native_update
 
         if not self.name:
-            self._attr_name = entry.data[CONF_MODEL]
-
+            self._attr_name = entry.data[CONF_MODEL] + " " + name
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN,
                                                           entry.unique_id)})
+        self._attr_native_unit_of_measurement = unit
+
+    async def async_update(self):
+        """Update the sensor."""
+        return self.native_value
 
     @property
     def native_value(self):
         """Return sensor state. Since this value is not processed, and delivered
         directly to the sensor, it is considered a native value.  This can be
         overridden by home assistant user to provide a custom value."""
-        return self.native_update
+        return self.bridge.data.__dict__[self.native_update]

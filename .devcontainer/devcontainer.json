@@ -68,7 +68,7 @@
   "forwardPorts": [],
   // We have a special folder in our environment which is gitignored and handles all config.
   // Link our settings into the container and place our code into the custom components.
-  "postCreateCommand": "rm -Rf /home/vscode/.homeassistant;ln -s /workspaces/anycubic-homeassistant/.homeassistant /home/vscode/.homeassistant;ln -s /workspaces/anycubic-homeassistant/custom_components  /workspaces/anycubic-homeassistant/.homeassistant/||echo already linked;",
+  "postCreateCommand": "rm -Rf /home/vscode/.homeassistant;ln -s /workspaces/anycubic-homeassistant/.homeassistant /home/vscode/.homeassistant;ln -s /workspaces/anycubic-homeassistant/custom_components  /workspaces/anycubic-homeassistant/.homeassistant/||echo already linked;git config --global --add safe.directory /workspaces/anycubic-homeassistant",
   "remoteUser": "vscode",
   "features": {
     "git": "latest"

@@ -94,6 +94,7 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 self.data.update(self.map_sysinfo_to_data(system_information))
                 await self.async_set_unique_id(self.data[CONF_SERIAL])
 
+
                 self.context.update({
                     "title_placeholders": {
                         CONF_HOST: self.data[CONF_HOST],
@@ -123,19 +124,29 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _process_discovered_device(self, device: dict) -> Any:
         """Prepare configuration for a discovered Anycubic device."""
-        self.discovery_schema = {
-            vol.Required(CONF_HOST, default=device[CONF_HOST]): str,
-        }
+        #Abort if host is configured.
+        self._abort_if_unique_id_configured(updates={
+            CONF_HOST: device[CONF_HOST]
+        })
 
+        #Abort if serial is configured
         adapter = MonoXAPIAdapter(device[CONF_HOST])
-        system_information = adapter.sysinfo()
+        system_information:MonoXSysInfo() = adapter.sysinfo()
         device.update(self.map_sysinfo_to_data(system_information))
-
         self._abort_if_unique_id_configured(updates={
-            CONF_HOST: device[CONF_HOST],
+            CONF_SERIAL: system_information.serial
         })
-        self._abort_if_unique_id_configured(updates={
-            CONF_HOST: device[CONF_SERIAL],
-        })
+        self.async_set_unique_id(device[CONF_SERIAL])
+        #Check entries to see if they have been discovered previously
+        for entry in self._async_current_entries():
+            if entry.data[CONF_SERIAL] == device[CONF_SERIAL]:
+                self.hass.config_entries.async_update_entry(
+                    entry,
+                    data={
+                        **entry.data,
+                        CONF_HOST: device[CONF_HOST],
+                    })
+            self.async_abort(reason="already_configured")
 
+        #all checks passed, lets create the entry
         return await self.async_step_user()
