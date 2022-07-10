@@ -39,8 +39,7 @@
     "terminal.integrated.profiles.linux": {
       "zsh": {
         "path": "/usr/bin/zsh"
-      },
-      "remote.containers.copyGitConfig": true
+      }
     },
     "terminal.integrated.defaultProfile.linux": "zsh",
     "remote.containers.gitCredentialHelperConfigLocation": "global"
