@@ -12,7 +12,8 @@ from uart_wifi.errors import ConnectionException
 
 from .errors import AnycubicException
 from .const import (CONF_SERIAL, POLL_INTERVAL, ATTR_MANUFACTURER, DOMAIN,
-                    SUGGESTED_AREA)
+                    SUGGESTED_AREA, OPT_HIDE_IP, OPT_NO_EXTRA_DATA,
+                    CONVERT_SECONDS_MODEL)
 from .adapter_fascade import MonoXAPIAdapter
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,12 +43,6 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     # The config entry is held to provde Unique ID for the Device object.
     _config_entry: ConfigEntry
 
-    #When polling sensor status, also pull the device extras.
-    _use_extras: bool = True
-
-    #The Device IP address, added to extras.
-    _ip_address: dict = {CONF_HOST: ""}
-
     def __init__(self, hass: HomeAssistant, monox: MonoXAPIAdapter,
                  config_entry: ConfigEntry) -> None:
         """Initialize the DataBridge.  Here we initialize the coordinator
@@ -68,15 +63,8 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         self._config_entry = config_entry
         self._monox = monox
         self.data = {"status": "offline"}
-        self._use_extras = True
-        self._use_extras = not (hasattr(
-            config_entry.options, "no_extras")) and config_entry.options.get(
-                "no_extras", False)
-        self._hide_ip = config_entry.options.get("hide_ip", False)
-        self._ip_address = {
-            CONF_HOST: monox.ip_address if self._hide_ip else None
-        }
-        self._convert_seconds = "Mono X 6K" in config_entry.data["model"]
+        self._convert_seconds = CONVERT_SECONDS_MODEL in config_entry.data[
+            CONF_MODEL]
 
     async def _async_update_data(self):
         """Update data via API. On the first sync this method will provide
@@ -87,15 +75,15 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         try:
             [current_status, extras] = self._monox.get_current_status(
                 convert_seconds=self._convert_seconds,
-                use_extras=self._use_extras)
+                no_extras=self._config_entry.options[OPT_NO_EXTRA_DATA])
             if current_status:
-                if self._use_extras:
+                if self._config_entry.options[OPT_NO_EXTRA_DATA]:
+                    #no extras status.
+                    self._maybe_add_host_to_extras()
+                else:
                     #update the data source status.
                     self._reported_status_extras.update(extras)
                     #add the host to the extras if it's not already there.
-                    self._maybe_add_host_to_extras()
-                else:
-                    #no status.
                     self._maybe_add_host_to_extras()
 
                 return current_status
@@ -110,9 +98,10 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     def _maybe_add_host_to_extras(self):
         """If the extra data does not already contain the host, add it.
         This is used to provide the host to the sensor extras."""
-        if not self._hide_ip and not hasattr(self._reported_status_extras,
-                                             CONF_HOST):
-            self._reported_status_extras.update(self._ip_address)
+        if not self._config_entry.options[OPT_NO_EXTRA_DATA] and not hasattr(
+                self._reported_status_extras, CONF_HOST):
+            self._reported_status_extras.update(
+                {CONF_HOST: self._monox.ip_address})
 
     def get_last_status_extras(self):
         """"provide a public method to give the last status extras for the sensor."""
@@ -121,10 +110,6 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     def get_printer(self):
         """Return the printer api for diagnostics."""
         return self._monox
-
-    def set_use_extras(self, use_extras: bool):
-        """Set the use_extras flag."""
-        self._use_extras = use_extras
 
 
 # pylint: disable=anomalous-backslash-in-string

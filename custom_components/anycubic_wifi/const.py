@@ -41,3 +41,6 @@ ATTR_LOOKUP_TABLE = [["file", "file", TYPE_FILE],
 ATTR_REMAINING_LAYERS = "layers_remain_num"
 ATTR_TOTAL_TIME = "total_print_time"
 OFFLINE_STATUS = MonoXStatus("getstatus,offline,end")
+CONVERT_SECONDS_MODEL="Mono X 6K"
+OPT_NO_EXTRA_DATA = "no_extras"
+OPT_HIDE_IP="hide_ip"

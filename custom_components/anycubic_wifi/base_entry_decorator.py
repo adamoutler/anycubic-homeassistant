@@ -6,7 +6,7 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import DeviceInfo
-
+from .const import DOMAIN
 from .img.anycubic import AnycubicImages
 
 from . import AnycubicDataBridge
@@ -24,6 +24,8 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge]):
         self.bridge = bridge
         self._attr_unique_id = self.entry.entry_id
         super().__init__(bridge)
+        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN,
+                                                          entry.unique_id)})
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -61,10 +63,6 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge]):
 
     @property
     def extra_state_attributes(self):
-        """Return the extra state attributes. This is a dictionary of
-        attributes that will be added to the state attributes. This allows
-        extra data to be provided to the user interface. It can be disabled
-        in the event of too much data being delivered to the database, ie, if
-        the printer is running rount-the-click for production, and not hobbiest
-        purposes. It is configured in the Integrations UI via CONFIGURE button."""
-        return self.bridge.get_last_status_extras()
+        """Return the state attributes."""
+        extras = self.bridge.get_last_status_extras()
+        return extras

@@ -36,7 +36,7 @@ class MonoXAPIAdapter(UartWifi):
 
     def get_current_status(
             self, convert_seconds: bool,
-            use_extras: bool) -> Union[MonoXStatus, dict] | bool:
+            no_extras: bool) -> Union[MonoXStatus, dict] | bool:
         """Get the MonoX Status.  Waits for a maximum of 5 seconds.
 
         Parameters:
@@ -45,7 +45,7 @@ class MonoXAPIAdapter(UartWifi):
         MonoX 4K, the time is provided in minutes. Therefore, by default,
         the API converts to seconds.  Since only the MonoX 6K is provided
         with a time in seconds, we must unconvert for this particular model.
-        :use_extras (bool): If this value is true, then we will pull the device
+        :no_extras (bool): If this value is true, then we will not pull the device
         extras.  Otherwise, we will not pull the device extras.
 
         Returns
@@ -58,7 +58,7 @@ class MonoXAPIAdapter(UartWifi):
                 response=respone_stream, expected_type=MonoXStatus)
             if status:
                 extras = {}
-                if use_extras:
+                if not no_extras:
                     extras = _parse_extras(status, convert_seconds)
                 return (status, extras)
         finally:

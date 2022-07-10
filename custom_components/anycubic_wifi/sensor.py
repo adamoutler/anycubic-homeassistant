@@ -12,7 +12,6 @@ from typing import Any
 import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import CONF_MODEL
@@ -82,12 +81,9 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
         super().__init__(entry=entry, bridge=bridge)
         self.hass = hass
         self.native_update = native_update
-
+        self._attr_native_unit_of_measurement = unit
         if not self.name:
             self._attr_name = entry.data[CONF_MODEL] + " " + name
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN,
-                                                          entry.unique_id)})
-        self._attr_native_unit_of_measurement = unit
 
     async def async_update(self):
         """Update the sensor."""
