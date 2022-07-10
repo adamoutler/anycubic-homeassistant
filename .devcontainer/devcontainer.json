@@ -39,9 +39,11 @@
     "terminal.integrated.profiles.linux": {
       "zsh": {
         "path": "/usr/bin/zsh"
-      }
+      },
+      "remote.containers.copyGitConfig": true
     },
-    "terminal.integrated.defaultProfile.linux": "zsh"
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "remote.containers.gitCredentialHelperConfigLocation": "global"
   },
   // Add the IDs of extensions you want installed when the container is created.
   "extensions": [
@@ -53,7 +55,8 @@
     "ms-python.python",
     "GitHub.copilot",
     "GitHub.vscode-pull-request-github",
-    "keesschollaart.vscode-home-assistant"
+    "keesschollaart.vscode-home-assistant",
+    "ms-vscode-remote.vscode-remote-extensionpack"
   ],
   "containerEnv": {
     "PYTHONPATH ": "/workspaces/anycubic-python/src",
