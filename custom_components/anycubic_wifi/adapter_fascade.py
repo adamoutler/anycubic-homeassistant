@@ -125,9 +125,9 @@ def _parse_extras(raw_extras: dict, convert_seconds: bool) -> dict | None:
     extras: dict = {}
     if not hasattr(raw_extras, "status"):
         return extras
-    if hasattr(raw_extras, 'seconds_remaining') and convert_seconds:
-        remain = int(raw_extras.seconds_remaining)
-        raw_extras.seconds_remaining = int(remain / 60)
+    if hasattr(raw_extras, 'seconds_elapse') and convert_seconds:
+        seconds_elapsed = int(raw_extras.seconds_elapse)/60
+        raw_extras.__dict__['seconds_elapse'] = seconds_elapsed
 
     for [internal_attr, hass_attr, handling] in ATTR_LOOKUP_TABLE:
         if hasattr(raw_extras, internal_attr):
