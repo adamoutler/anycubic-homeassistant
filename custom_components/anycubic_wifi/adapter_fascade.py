@@ -162,7 +162,7 @@ def _parse_extras(raw_extras: dict, convert_seconds: bool) -> dict | None:
     if hasattr(raw_extras, 'seconds_elapse') and hasattr(raw_extras, 'seconds_remaining'):
         remain = int(raw_extras.seconds_remaining)
         elapsed = int(raw_extras.seconds_elapse)
-        extras[ATTR_TOTAL_TIME] = _seconds_to_hhmmss(elapsed - remain)
+        extras[ATTR_TOTAL_TIME] = _seconds_to_hhmmss(elapsed + remain)
     else:
         extras[ATTR_TOTAL_TIME] = None
 
