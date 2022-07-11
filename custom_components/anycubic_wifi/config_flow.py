@@ -11,7 +11,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.core import callback
 from uart_wifi.response import MonoXSysInfo
 from uart_wifi.errors import ConnectionException
-from .const import SW_VERSION
+from .const import OPT_HIDE_EXTRA_SENSORS, SW_VERSION
 from .errors import AnycubicException
 from .adapter_fascade import MonoXAPIAdapter
 from .options import AnycubicOptionsFlowHandler
@@ -101,7 +101,8 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     data=self.data,
                     options={
                         OPT_HIDE_IP: False,
-                        OPT_NO_EXTRA_DATA: False
+                        OPT_NO_EXTRA_DATA: False,
+                        OPT_HIDE_EXTRA_SENSORS: False
                     },
                     description="Anycubic Uart Device",
                 )

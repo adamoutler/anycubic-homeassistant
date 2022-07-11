@@ -4,7 +4,7 @@ from typing import Any
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
 import voluptuous as vol
-from .const import OPT_HIDE_IP, OPT_NO_EXTRA_DATA
+from .const import OPT_HIDE_IP, OPT_NO_EXTRA_DATA, OPT_HIDE_EXTRA_SENSORS
 
 
 class AnycubicOptionsFlowHandler(config_entries.OptionsFlow):
@@ -25,6 +25,11 @@ class AnycubicOptionsFlowHandler(config_entries.OptionsFlow):
             step_id="init",
             data_schema=vol.Schema(
                 {
+                    vol.Required(
+                        OPT_HIDE_EXTRA_SENSORS,
+                        default=self.config_entry.options.get(OPT_HIDE_EXTRA_SENSORS),
+                    ):
+                    bool,
                     vol.Required(
                         OPT_NO_EXTRA_DATA,
                         default=self.config_entry.options.get(OPT_NO_EXTRA_DATA),

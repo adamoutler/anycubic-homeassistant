@@ -6,7 +6,8 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import DeviceInfo
-from .const import DOMAIN
+from homeassistant.const import CONF_HOST
+from .const import DOMAIN, OPT_HIDE_EXTRA_SENSORS, OPT_HIDE_IP, OPT_NO_EXTRA_DATA
 from .img.anycubic import AnycubicImages
 
 from . import AnycubicDataBridge
@@ -15,14 +16,15 @@ from . import AnycubicDataBridge
 class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge]):
     """Base common to all MonoX entities."""
 
-    def __init__(self, entry: ConfigEntry, bridge: AnycubicDataBridge) -> None:
+    def __init__(self, entry: ConfigEntry, bridge: AnycubicDataBridge,
+                 name: str) -> None:
         """Initialize the base MonoX entity object.
         :entry: the configuration data.
         :coordinator: the processing and storage of updates.
         """
         self.entry = entry
         self.bridge = bridge
-        self._attr_unique_id = self.entry.entry_id
+        self._attr_unique_id = self.entry.entry_id + "_" + name
         super().__init__(bridge)
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN,
                                                           entry.unique_id)})
@@ -65,4 +67,12 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge]):
     def extra_state_attributes(self):
         """Return the state attributes."""
         extras = self.bridge.get_last_status_extras()
+        #If no extras or hide extras is set, then we don't use the reported extras.
+        if self.entry.options[OPT_NO_EXTRA_DATA] or not self.entry.options[
+                OPT_HIDE_EXTRA_SENSORS]:
+            extras = {}
+
+        #if Hide IP is set, then we hide the IP as well.
+        if not self.entry.options[OPT_HIDE_IP]:
+            extras.update({CONF_HOST: self.entry.data[CONF_HOST]})
         return extras

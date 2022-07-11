@@ -16,9 +16,9 @@
       "init": {
         "title": "Anycubic Wifi Config",
         "data": {
-          "no_extras": "Turn off sensor extras to save database space. (requires restart)",
-          "extra_sensors": "Create one sensor for each value from the status message from the device.  These values will remain unavailable whenever the device is not printing. (requires restart)",
-          "hide_ip": "Hide the device IP address from the sensor extras. (requires restart)"
+          "hide_extra_sensors": "Hide Extra Sensors - Place all Extra Sensor data in the Status sensor extra attributes. Checking this option will prevent creation of create one sensor for the device.  Since all \"extra\" sensors are subordinates of the \"print\" status and only active during the print function, if this is unchecked all sensors will report \"Unavailable\" unless a print is in-progress. Check this if you want just one sensor with a lot of attributes. default=unchecked (requires restart)",
+          "no_extras": "No Extras - Only report printer state. This option turns off sensor extras to save database and remove extra sensors space. This option could be useful if many printers are operating at the same time and only state is required.  Check this if you do not want information about the attributes in Home Assistant. - default=unchecked (requires restart)",
+          "hide_ip": "Hide IP - Hides the printer host address from sensor attributes. If this is unchecked, you can find the host name or IP address listed in attributes of any sensor. Check this box if you do not want the hostname or IP to appear within sensor Attributes. - default=unchecked (requires restart)"
         }
       }
     }

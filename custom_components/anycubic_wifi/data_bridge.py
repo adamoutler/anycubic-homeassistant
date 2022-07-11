@@ -12,8 +12,7 @@ from uart_wifi.errors import ConnectionException
 
 from .errors import AnycubicException
 from .const import (CONF_SERIAL, POLL_INTERVAL, ATTR_MANUFACTURER, DOMAIN,
-                    SUGGESTED_AREA, OPT_HIDE_IP, OPT_NO_EXTRA_DATA,
-                    CONVERT_SECONDS_MODEL)
+                    SUGGESTED_AREA, OPT_NO_EXTRA_DATA, CONVERT_SECONDS_MODEL)
 from .adapter_fascade import MonoXAPIAdapter
 
 _LOGGER = logging.getLogger(__name__)

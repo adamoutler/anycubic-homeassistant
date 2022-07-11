@@ -129,7 +129,8 @@ def _parse_extras(raw_extras: dict, convert_seconds: bool) -> dict | None:
         seconds_elapsed = int(raw_extras.seconds_elapse)/60
         raw_extras.__dict__['seconds_elapse'] = seconds_elapsed
 
-    for [internal_attr, hass_attr, handling] in ATTR_LOOKUP_TABLE:
+    # pylint: disable=unused-variable
+    for [internal_attr, hass_attr, handling,unit] in ATTR_LOOKUP_TABLE:
         if hasattr(raw_extras, internal_attr):
             raw_value = getattr(raw_extras, internal_attr)
             match handling:
