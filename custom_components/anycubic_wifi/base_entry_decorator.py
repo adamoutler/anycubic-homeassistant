@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.const import CONF_HOST
-from .const import DOMAIN, OPT_HIDE_EXTRA_SENSORS, OPT_HIDE_IP, OPT_NO_EXTRA_DATA
+from .const import DOMAIN, OPT_HIDE_EXTRA_SENSORS, OPT_HIDE_IP, OPT_NO_EXTRA_DATA, OPT_USE_PICTURE
 from .img.anycubic import AnycubicImages
 
 from . import AnycubicDataBridge
@@ -57,11 +57,11 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge]):
         in the models are not expected to be distinguishable. In the event
         another device is detected, the Entity Picture will not be displayed,
         thus resulting in a mdi:printer icon."""
-        if ('model' in self.entry.data
-                and str(self.entry.data["model"]).startswith("Photon Mono X")):
-            return AnycubicImages.MONO_X_IMAGE
-        else:
-            return None
+        if (self.entry.options[OPT_USE_PICTURE]):
+            if ('model' in self.entry.data
+                    and str(self.entry.data["model"]).startswith("Photon Mono X")):
+                return AnycubicImages.MONO_X_IMAGE
+        return None
 
     @property
     def extra_state_attributes(self):

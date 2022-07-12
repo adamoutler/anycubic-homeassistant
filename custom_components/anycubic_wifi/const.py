@@ -29,17 +29,17 @@ TYPE_FILE = "file"
 INTERNAL_FILE = "Internal File Name"
 # The following are the keys for the lookup table
 # [table name, display name, data type, unit]
-ATTR_LOOKUP_TABLE = [["file", "file", TYPE_FILE,""],
-                     ["current_layer", "Current Layers", TYPE_INT,"#"],
-                     ["total_layers", "Total Layers", TYPE_INT,"#"],
-                     ["layer_height", "Layer Height", TYPE_FLOAT,"mm"],
-                     ["percent_complete", '%' + " Complete", TYPE_INT,"%"],
-                     ["seconds_elapse", "Time Elapsed", TYPE_TIME,""],
-                     ["seconds_remaining", "Time Remaining", TYPE_TIME,""],
-                     ["total_volume", "Print Volume", TYPE_ML,"ml"],
-                     ["mode", "Mode", TYPE_STRING,""],
-                     ["unknown1", "unknown_1", TYPE_FLOAT,""],
-                     ["unknown2", "unknown_2", TYPE_STRING,""]]
+ATTR_LOOKUP_TABLE = [["file", "file", TYPE_FILE, ""],
+                     ["current_layer", "Current Layers", TYPE_INT, "#"],
+                     ["total_layers", "Total Layers", TYPE_INT, "#"],
+                     ["layer_height", "Layer Height", TYPE_FLOAT, "mm"],
+                     ["percent_complete", '%' + " Complete", TYPE_INT, "%"],
+                     ["seconds_elapse", "Time Elapsed", TYPE_TIME, ""],
+                     ["seconds_remaining", "Time Remaining", TYPE_TIME, ""],
+                     ["total_volume", "Print Volume", TYPE_ML, "ml"],
+                     ["mode", "Mode", TYPE_STRING, ""],
+                     ["unknown1", "unknown_1", TYPE_FLOAT, ""],
+                     ["unknown2", "unknown_2", TYPE_STRING, ""]]
 ATTR_REMAINING_LAYERS = "layers_remain_num"
 ATTR_TOTAL_TIME = "total_print_time"
 OFFLINE_STATUS = MonoXStatus("getstatus,offline,end")
@@ -47,3 +47,4 @@ CONVERT_SECONDS_MODEL = "Mono X 6K"
 OPT_NO_EXTRA_DATA = "no_extras"
 OPT_HIDE_IP = "hide_ip"
 OPT_HIDE_EXTRA_SENSORS = "hide_extra_sensors"
+OPT_USE_PICTURE = "use_picture"
