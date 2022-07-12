@@ -19,20 +19,38 @@ from __future__ import annotations
 from datetime import timedelta
 from gc import callbacks
 import logging
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_HOST,
     CONF_SCAN_INTERVAL,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.helpers.device_registry import DeviceRegistry
+
 from .data_bridge import AnycubicDataBridge
+from homeassistant.config_entries import SOURCE_IMPORT
 from .adapter_fascade import MonoXAPIAdapter
-from .options import AnycubicOptionsFlowHandler
 from .const import (DOMAIN, PLATFORMS, POLL_INTERVAL, ANYCUBIC_WIFI_PORT)
 
 #Logger for the class.
 _LOGGER = logging.getLogger(__name__)
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Handle migration of a previous version config entry.
+    A config entry created under a previous version must go through the
+    integration setup again so we can properly retrieve the needed data
+    elements. Force this by removing the entry and triggering a new flow.
+    """
+    # Remove the entry which will invoke the callback to delete the app.
+    hass.async_create_task(hass.config_entries.async_remove(entry.entry_id))
+    # only create new flow if there isn't a pending one for SmartThings.
+    if not hass.config_entries.flow.async_progress_by_handler(DOMAIN):
+        hass.async_create_task(
+            hass.config_entries.flow.async_init(
+                DOMAIN, context={"source": SOURCE_IMPORT}))
+    return True
 
 
 # pylint: disable=unused-argument
@@ -73,6 +91,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     bridge = get_new_data_bridge(hass, entry)
     await bridge.async_config_entry_first_refresh()
     entry_location["coordinator"] = bridge
+    entry.async_on_unload(entry.add_update_listener(opt_update_listener))
 
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     return True
@@ -94,14 +113,21 @@ def get_new_data_bridge(hass, entry) -> AnycubicDataBridge:
     return bridge
 
 
-async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def opt_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """When an entry changes, the update_listener is called.  This is where
         live configuration updates are handled. The procedure for this
-        particular integration is to simply refresh the entity. Refresh
-        occurs by removing the existing entity and creating a new one.
+        particular integration is to simply refresh the entity. Refresh occurs
+        by removing the existing device from the registry, thereby taking all
+        the device entities with the old device and removing them. Then the
+        device is added back to the registry during async_setup_entry. This
+        will trigger a new entity setup.
     :param hass: HomeAssistant api reference to all of the Home Assistant data.
     :param entry: The config entry of item being setup."""
-    hass.data[DOMAIN].pop(entry.entry_id)
+    #find and remove the device from the registry
+    registry: DeviceRegistry = hass.data['device_registry']
+    device = registry.async_get_device(identifiers=[(DOMAIN, entry.unique_id)])
+    registry.async_remove_device(device.id)
+    #setup the device again
     await async_setup_entry(hass, entry)
     await hass.config_entries.async_reload(entry.entry_id)
 
