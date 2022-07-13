@@ -10,7 +10,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.core import callback
 from uart_wifi.response import MonoXSysInfo
 from uart_wifi.errors import ConnectionException
-from .const import OPT_HIDE_EXTRA_SENSORS, OPT_USE_PICTURE, SW_VERSION
+from .const import CONF_DHCP, OPT_HIDE_EXTRA_SENSORS, OPT_USE_PICTURE, SW_VERSION
 from .errors import AnycubicException
 from .adapter_fascade import MonoXAPIAdapter
 from .options import AnycubicOptionsFlowHandler
@@ -53,9 +53,13 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         flow.  The overall flow from this point is dhcp->duplicate_detection->user
         confirmation."""
         if discovery_info.ip is not None:
-            discovered_information = {CONF_HOST: str(discovery_info.ip)}
-            try :
+            discovered_information = {
+                CONF_HOST: str(discovery_info.ip),
+                CONF_DHCP: True
+            }
+            try:
                 self.async_step_duplicates(discovered_information)
+                #Before adding the device, we pass it into the user confirmation step.
                 return await self.async_step_user()
             except ValueError:
                 # Don't spam the logs because this device just came back online
@@ -63,31 +67,31 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 return False
 
     async def async_step_user(self, user_input=None) -> FlowResult:
-        """This is where the user will try to .
-        """
-        if user_input is not None:
+        """This is where the user or DHCP will provide a host. From there we
+        query the device to see if it is duplicated. When launched manually,
+        no user input is present, so we show the form. If launched from DHCP,
+        we show the user the device information and ask if it is correct."""
+        if user_input is not None and not hasattr(user_input, CONF_DHCP):
             try:
                 await self.async_step_duplicates(user_input)
                 return await self.async_step_finish(user_input)
             except ValueError:
-                user_input["errors"]=["connection_error"]
+                user_input["errors"] = ["connection_error"]
                 return await self.async_step_user()
         return self.async_show_form(
             step_id="user",
             description_placeholders=user_input,
             data_schema=DETECTION_SCHEMA,
-            errors=user_input["errors"]|None,
+            errors=user_input["errors"] | None,
         )
-
 
     async def async_step_duplicates(self, device: dict) -> None:
         """Prepare configuration for a discovered Anycubic device."""
         #Abort if serial is configured
         self._add_device_info_to_device(device)
         await self.async_set_unique_id(device[CONF_SERIAL])
-        self._abort_if_unique_id_configured(updates={
-            CONF_HOST: device[CONF_HOST]
-        })
+        self._abort_if_unique_id_configured(
+            updates={CONF_HOST: device[CONF_HOST]})
         #Check entries to see if they have been discovered previously
         entries = self._async_current_entries()
         for entry in entries:
@@ -99,13 +103,10 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     })
             self.async_abort(reason="already_configured")
 
-
     def _add_device_info_to_device(self, device):
         adapter = MonoXAPIAdapter(device[CONF_HOST])
         system_information: MonoXSysInfo() = adapter.sysinfo()
         device.update(self.map_sysinfo_to_data(system_information))
-
-
 
     async def async_step_finish(self,
                                 discovered_information: dict) -> FlowResult:

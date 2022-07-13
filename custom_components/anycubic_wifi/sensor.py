@@ -109,11 +109,17 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
         """Return sensor state. Since this value is not processed, and delivered
         directly to the sensor, it is considered a native value.  This can be
         overridden by home assistant user to provide a custom value."""
-        return self.bridge.data.__dict__[self.native_update]
+
+        return (self.bridge.data.status)
 
     async def async_update(self):
         """Update the sensor."""
         return self.native_value
+
+    @property
+    def available(self) -> bool:
+        """Return if the sensor is available."""
+        return self.bridge.is_online()
 
 
 class MonoXExtraSensor(MonoXSensor):
