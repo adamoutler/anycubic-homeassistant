@@ -49,9 +49,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
                         unit=unit)
         ])
 
-    @callback
-    async def async_add_extra_sensor(sensor: Any, name: str,
-                                     unit: str) -> None:
+    async def async_add_extra_sensor(
+        sensor: str,
+        name: str,
+        unit: str,
+    ) -> None:
         """Add sensor from Anycubic device into the Home Assistant entity
         registry."""
 
@@ -64,11 +66,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
                              unit=unit)
         ])
 
-    # extra_sensors = entry.options["extra_sensors"]
-    # if extra_sensors:
-    #     for (data, name, type) in ATTR_LOOKUP_TABLE:
-    #         await async_add_sensor(coordinator.data[name])
-    # else:
     await async_add_sensor("status", "status", "")
     if not entry.options.get(OPT_HIDE_EXTRA_SENSORS):
         # pylint: disable=unused-variable
@@ -102,7 +99,7 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
         self.native_update = native_update
         self._attr_native_unit_of_measurement = unit
         if not self.name:
-            self._attr_name = self.device_info[CONF_NAME] + " " + name
+            self._attr_name = name
 
     @property
     def native_value(self):
