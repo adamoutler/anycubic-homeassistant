@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from uart_wifi.errors import ConnectionException
 
 from .errors import AnycubicException
-from .const import (CONF_SERIAL, POLL_INTERVAL, ATTR_MANUFACTURER, DOMAIN,
+from .const import (CONF_SERIAL, POLL_INTERVAL, ATTR_MANUFACTURER, DOMAIN, STATUS_OFFLINE,
                     SUGGESTED_AREA, OPT_NO_EXTRA_DATA, CONVERT_SECONDS_MODEL)
 from .adapter_fascade import MonoXAPIAdapter
 
@@ -42,6 +42,10 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     # The config entry is held to provde Unique ID for the Device object.
     _config_entry: ConfigEntry
 
+    # The data is held to provide the debounce function to the system so
+    # we don't spam the logs with offline messages.
+    _connection_retries: int = 0
+
     def __init__(self, hass: HomeAssistant, monox: MonoXAPIAdapter,
                  config_entry: ConfigEntry) -> None:
         """Initialize the DataBridge.  Here we initialize the coordinator
@@ -61,7 +65,6 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         )
         self._config_entry = config_entry
         self._monox = monox
-        self.data = {"status": "offline"}
         self._convert_seconds = CONVERT_SECONDS_MODEL in config_entry.data[
             CONF_MODEL]
 
@@ -76,6 +79,8 @@ class AnycubicDataBridge(DataUpdateCoordinator):
                 convert_seconds=self._convert_seconds,
                 no_extras=self._config_entry.options[OPT_NO_EXTRA_DATA])
             if current_status:
+                # We have connection, so we can reset the connection retries.
+                self._connection_retries = 0
                 if self._config_entry.options[OPT_NO_EXTRA_DATA]:
                     #no extras status.
                     self._maybe_add_host_to_extras()
@@ -88,11 +93,26 @@ class AnycubicDataBridge(DataUpdateCoordinator):
                 return current_status
         except (AnycubicException, ConnectionException,
                 ConnectionRefusedError):
-            # This is probably an API error, these devices have poor
+            # This is probably a connectivity error, these devices have poor
             # wifi connectivity and are often offline.
             pass
 
-        raise UpdateFailed("Failed to obtain status from device.")
+        return self.debounce_failure_response()
+
+    def debounce_failure_response(self):
+        """Debounce the data bridge.  These devices have very poor wifi
+        connectivity. We don't want to spam the logs with offline messages.
+        Instead, we want to debounce the failure response and only report
+        problems when the device is not responsive for a while. I've
+        observed 250 failures in a 16 hour period, polling at a 10 second
+        interval with the wifi router located within 5 feet of the device.
+        """
+        self._connection_retries += 1
+        if self._connection_retries > 5:
+            raise UpdateFailed("Failed to obtain status from device.")
+        #Report the offline status.
+        return STATUS_OFFLINE
+
 
     def _maybe_add_host_to_extras(self):
         """If the extra data does not already contain the host, add it.

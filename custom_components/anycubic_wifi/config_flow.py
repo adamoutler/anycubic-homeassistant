@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components import dhcp
@@ -17,9 +16,8 @@ from .adapter_fascade import MonoXAPIAdapter
 from .options import AnycubicOptionsFlowHandler
 from .const import (CONF_SERIAL, DOMAIN, OPT_HIDE_IP, OPT_NO_EXTRA_DATA)
 
-LOGGER = logging.getLogger(__name__)
-
-user_data_schema = vol.Schema({
+#Schema used for initalization of the config flow
+DETECTION_SCHEMA = vol.Schema({
     vol.Required(CONF_HOST, default="192.168.1.254"):
     str,
 })
@@ -49,13 +47,18 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_dhcp(
             self, discovery_info: dhcp.DhcpServiceInfo) -> FlowResult:
-        """Prepare configuration for a DHCP discovered Anycubic uart-wifi device."""
+        """This is where the Home Assistant calls up this config flow with any
+        discovered devices, matching the dhcp profile specified in the manifest.json
+        Here we create a dictionary and pass it on to the next steps in the config
+        flow.  The overall flow from this point is dhcp->duplicate_detection->user
+        confirmation."""
         if discovery_info.ip is not None:
-            discovered_information = {}
-            discovered_information[CONF_HOST] = str(discovery_info.ip)
-            self.data = {}
-            self.async_step_duplicates(discovered_information)
-            return await self.async_step_user()
+            discovered_information = {CONF_HOST: str(discovery_info.ip)}
+            try :
+                self.async_step_duplicates(discovered_information)
+                return await self.async_step_user()
+            except ValueError:
+                return False
 
     async def async_step_duplicates(self, device: dict) -> None:
         """Prepare configuration for a discovered Anycubic device."""
@@ -76,10 +79,6 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     })
             self.async_abort(reason="already_configured")
 
-    async def async_step_import(self, user_input=None):
-        """Occurs when a previously entry setup fails and is re-initiated."""
-        return await self.async_step_user(user_input)
-        #all checks passed, lets create the entry
 
     def _add_device_info_to_device(self, device):
         adapter = MonoXAPIAdapter(device[CONF_HOST])
@@ -97,7 +96,7 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             description_placeholders=user_input,
-            data_schema=user_data_schema,
+            data_schema=DETECTION_SCHEMA,
             errors={"0": "invalid_ip"},
         )
 
