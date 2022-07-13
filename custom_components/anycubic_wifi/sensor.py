@@ -14,7 +14,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import CONF_MODEL
+from homeassistant.const import CONF_NAME
 from .data_bridge import AnycubicDataBridge
 from .base_entry_decorator import AnycubicEntityBaseDecorator
 
@@ -101,8 +101,8 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
         self.hass = hass
         self.native_update = native_update
         self._attr_native_unit_of_measurement = unit
-        if not self.name or not self.name.endswith(name):
-            self._attr_name = entry.data[CONF_MODEL] + " " + name
+        if not self.name:
+            self._attr_name = self.device_info[CONF_NAME] + " " + name
 
     @property
     def native_value(self):

@@ -5,7 +5,8 @@ from typing import cast
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.const import (CONF_MODEL, ATTR_SW_VERSION, CONF_HOST)
+from homeassistant.const import (CONF_MODEL, ATTR_SW_VERSION, CONF_HOST,
+                                 CONF_NAME)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.core import HomeAssistant
 from uart_wifi.errors import ConnectionException
@@ -157,12 +158,11 @@ class AnycubicDataBridge(DataUpdateCoordinator):
                              ],
                 suggested_area=SUGGESTED_AREA,
                 sw_version=self.config_entry.data[ATTR_SW_VERSION],
-                supported_features=self._monox.ip_address,
                 model=self.config_entry.data[CONF_MODEL],
-                name=ATTR_MANUFACTURER + " " +
-                self.config_entry.data[CONF_MODEL] + " " +
-                self.config_entry.data[CONF_SERIAL][-4:4],
-            )
+                name=(self.config_entry.data[CONF_NAME] if hasattr(
+                    self.config_entry.data,
+                    CONF_NAME) else self.config_entry.data[CONF_MODEL] + " " +
+                      self.config_entry.data[CONF_SERIAL][-4:4], ))
 
         except AttributeError as ex:
             _LOGGER.debug(ex)
