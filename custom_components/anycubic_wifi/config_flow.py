@@ -58,7 +58,27 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 self.async_step_duplicates(discovered_information)
                 return await self.async_step_user()
             except ValueError:
+                # Don't spam the logs because this device just came back online
+                # and we already have a config entry for it.
                 return False
+
+    async def async_step_user(self, user_input=None) -> FlowResult:
+        """This is where the user will try to .
+        """
+        if user_input is not None:
+            try:
+                await self.async_step_duplicates(user_input)
+                return await self.async_step_finish(user_input)
+            except ValueError:
+                user_input["errors"]=["connection_error"]
+                return await self.async_step_user()
+        return self.async_show_form(
+            step_id="user",
+            description_placeholders=user_input,
+            data_schema=DETECTION_SCHEMA,
+            errors=user_input["errors"]|None,
+        )
+
 
     async def async_step_duplicates(self, device: dict) -> None:
         """Prepare configuration for a discovered Anycubic device."""
@@ -85,20 +105,7 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         system_information: MonoXSysInfo() = adapter.sysinfo()
         device.update(self.map_sysinfo_to_data(system_information))
 
-    async def async_step_user(self, user_input=None) -> FlowResult:
-        """Handle a Anycubic MonoX config flow start.
 
-        Manage device specific parameters.
-        """
-        if user_input is not None:
-            await self.async_step_duplicates(user_input)
-            return await self.async_step_finish(user_input)
-        return self.async_show_form(
-            step_id="user",
-            description_placeholders=user_input,
-            data_schema=DETECTION_SCHEMA,
-            errors={"0": "invalid_ip"},
-        )
 
     async def async_step_finish(self,
                                 discovered_information: dict) -> FlowResult:

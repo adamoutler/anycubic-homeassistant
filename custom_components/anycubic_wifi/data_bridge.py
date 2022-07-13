@@ -11,8 +11,9 @@ from homeassistant.core import HomeAssistant
 from uart_wifi.errors import ConnectionException
 
 from .errors import AnycubicException
-from .const import (CONF_SERIAL, POLL_INTERVAL, ATTR_MANUFACTURER, DOMAIN, STATUS_OFFLINE,
-                    SUGGESTED_AREA, OPT_NO_EXTRA_DATA, CONVERT_SECONDS_MODEL)
+from .const import (CONF_SERIAL, POLL_INTERVAL, ATTR_MANUFACTURER, DOMAIN,
+                    STATUS_OFFLINE, SUGGESTED_AREA, OPT_NO_EXTRA_DATA,
+                    CONVERT_SECONDS_MODEL)
 from .adapter_fascade import MonoXAPIAdapter
 
 _LOGGER = logging.getLogger(__name__)
@@ -81,15 +82,14 @@ class AnycubicDataBridge(DataUpdateCoordinator):
             if current_status:
                 # We have connection, so we can reset the connection retries.
                 self._connection_retries = 0
-                if self._config_entry.options[OPT_NO_EXTRA_DATA]:
-                    #no extras status.
-                    self._maybe_add_host_to_extras()
-                else:
-                    #update the data source status.
-                    self._reported_status_extras.update(extras)
-                    #add the host to the extras if it's not already there.
-                    self._maybe_add_host_to_extras()
 
+                # Depending on user selected options, we store data in extras.
+                self._maybe_record_status_extras(extras)
+                self._maybe_add_host_to_extras()
+
+                # Home assistant automatically stores this as the
+                # hass.data['unique_id']['status'] and we pick it up
+                # in the sensor without needing to store it.
                 return current_status
         except (AnycubicException, ConnectionException,
                 ConnectionRefusedError):
@@ -98,6 +98,10 @@ class AnycubicDataBridge(DataUpdateCoordinator):
             pass
 
         return self.debounce_failure_response()
+
+    def _maybe_record_status_extras(self, extras):
+        if not self._config_entry.options[OPT_NO_EXTRA_DATA]:
+            self._reported_status_extras.update(extras)
 
     def debounce_failure_response(self):
         """Debounce the data bridge.  These devices have very poor wifi
@@ -112,7 +116,6 @@ class AnycubicDataBridge(DataUpdateCoordinator):
             raise UpdateFailed("Failed to obtain status from device.")
         #Report the offline status.
         return STATUS_OFFLINE
-
 
     def _maybe_add_host_to_extras(self):
         """If the extra data does not already contain the host, add it.
