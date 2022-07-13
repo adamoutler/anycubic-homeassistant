@@ -117,6 +117,11 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         #Report the offline status.
         return STATUS_OFFLINE
 
+    def is_online(self):
+        """Return True if the device is online. We can detect this by checking
+        the connection retries. If they are 0, then we know the device is online."""
+        return self._connection_retries == 0
+
     def _maybe_add_host_to_extras(self):
         """If the extra data does not already contain the host, add it.
         This is used to provide the host to the sensor extras."""

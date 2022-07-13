@@ -20,6 +20,7 @@ POLL_INTERVAL = 10  # seconds
 ANYCUBIC_WIFI_PORT = 6000
 CONFIG_FLOW_VERSION = 1
 UART_WIFI_PROTOCOL = "Anycubic Uart Wifi Protocol"
+CONF_DHCP = "dhcp"
 TYPE_STRING = 'str'
 TYPE_TIME = 'time'
 TYPE_INT = 'int'
@@ -27,7 +28,7 @@ TYPE_ML = 'mL'
 TYPE_FLOAT = "float"
 TYPE_FILE = "file"
 INTERNAL_FILE = "Internal File Name"
-STATUS_OFFLINE = {"status": "offline"}
+STATUS_OFFLINE = MonoXStatus(["getstatus", "offline"])
 # The following are the keys for the lookup table
 # [table name, display name, data type, unit]
 ATTR_LOOKUP_TABLE = [["file", "file", TYPE_FILE, ""],
