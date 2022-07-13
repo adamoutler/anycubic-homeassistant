@@ -33,11 +33,13 @@ async def async_get_config_entry_diagnostics(
     entry["data"] = safe_dump(config_entry.data)
     entry["options"] = safe_dump(config_entry.options)
     entry["extra_state_data"] = safe_dump(bridge.get_last_status_extras())
+    abridge = safe_dump(bridge)
+    abridge["data"] = safe_dump(bridge.data)
     diagnostics_data = {
         config_entry.entry_id: {
             "config_entry_data": safe_dump(diagnostic_object),
             "hass data": safe_dump(hass.data[DOMAIN][config_entry.entry_id]),
-            "anycubic_data_bridge": safe_dump(bridge)
+            "anycubic_data_bridge": abridge
         }
     }
     return diagnostics_data
