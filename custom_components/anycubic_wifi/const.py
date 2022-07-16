@@ -29,10 +29,10 @@ ANYCUBIC_WIFI_PORT = 6000
 CONFIG_FLOW_VERSION = 1
 UART_WIFI_PROTOCOL = "Anycubic Uart Wifi Protocol"
 CONF_DHCP = "dhcp"
-TYPE_STRING = 'str'
-TYPE_TIME = 'time'
-TYPE_INT = 'int'
-TYPE_ML = 'mL'
+TYPE_STRING = "str"
+TYPE_TIME = "time"
+TYPE_INT = "int"
+TYPE_ML = "mL"
 TYPE_FLOAT = "float"
 TYPE_FILE = "file"
 INTERNAL_FILE = "Internal File Name"
@@ -47,7 +47,7 @@ ATTR_LOOKUP_TABLE = [
     ["current_layer", "Current Layer", TYPE_INT, ""],
     ["total_layers", "Total Layers", TYPE_INT, ""],
     ["layer_height", "Layer Height", TYPE_FLOAT, LENGTH_MILLIMETERS],
-    ["percent_complete", '%' + " Complete", TYPE_INT, PERCENTAGE],
+    ["percent_complete", "%" + " Complete", TYPE_INT, PERCENTAGE],
     ["seconds_elapse", "Time Elapsed", TYPE_TIME, UNIT_HMS],
     ["seconds_remaining", "Time Remaining", TYPE_TIME, UNIT_HMS],
     ["total_volume", "Print Volume", TYPE_ML, VOLUME_MILLILITERS],
@@ -55,10 +55,13 @@ ATTR_LOOKUP_TABLE = [
     ["unknown1", "unknown_1", TYPE_FLOAT, ""],
     ["unknown2", "unknown_2", TYPE_STRING, ""],
     [ATTR_REMAINING_LAYERS, ATTR_REMAINING_LAYERS, TYPE_TIME, ""],
-    [ATTR_TOTAL_TIME, ATTR_TOTAL_TIME, TYPE_TIME, UNIT_HMS]
+    [ATTR_TOTAL_TIME, ATTR_TOTAL_TIME, TYPE_TIME, UNIT_HMS],
 ]
 CONVERT_SECONDS_MODEL = "Mono X 6K"
 OPT_NO_EXTRA_DATA = "no_extras"
 OPT_HIDE_IP = "hide_ip"
 OPT_HIDE_EXTRA_SENSORS = "hide_extra_sensors"
 OPT_USE_PICTURE = "use_picture"
+API_MODEL = "model"
+API_SERIAL = "serial"
+API_FIRMWARE = "firmware"
