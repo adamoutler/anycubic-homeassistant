@@ -78,15 +78,15 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             except ValueError:
                 user_input["errors"] = ["connection_error"]
                 return await self.async_step_user()
-        return self.async_show_form(
-            step_id="user",
-            description_placeholders=user_input,
-            data_schema=DETECTION_SCHEMA,
-            errors=user_input["errors"] | None,
-        )
+        return self.async_show_form(step_id="user",
+                                    description_placeholders=user_input,
+                                    data_schema=DETECTION_SCHEMA,
+                                    errors=user_input["errors"] if hasattr(
+                                        user_input, "errors") else None)
 
     async def async_step_duplicates(self, device: dict) -> None:
-        """Prepare configuration for a discovered Anycubic device."""
+        """Prepare configuration for a discovered Anycubic device. Before continuing,
+        we check if the serial number is already registered to a device."""
         #Abort if serial is configured
         self._add_device_info_to_device(device)
         await self.async_set_unique_id(device[CONF_SERIAL])
