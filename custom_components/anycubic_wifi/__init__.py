@@ -17,7 +17,6 @@ creating the integration representation in hass.data.
 
 from __future__ import annotations
 from datetime import timedelta
-from gc import callbacks
 import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -25,11 +24,11 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.device_registry import DeviceRegistry
 
 from .data_bridge import AnycubicDataBridge
-from homeassistant.config_entries import SOURCE_IMPORT
 from .adapter_fascade import MonoXAPIAdapter
 from .const import (DOMAIN, PLATFORMS, POLL_INTERVAL, ANYCUBIC_WIFI_PORT)
 
@@ -55,18 +54,15 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 # pylint: disable=unused-argument
 async def async_setup(hass: HomeAssistant, processed: ConfigType) -> bool:
-    """At initialization, this method is called.  This is where we establish
-        a point in Home Assistant for our data to be located.  We elect to use
-        the standard hass.data[.const.DOMAIN] dictionary to store our data. A
-        component could use this to pass true/false or throw a
-        ConfigEntryAuthFailed, ConfigEntryNotReady or other exception to
-        indicate that the entry is unable to initialize.
+    """UNUSED.
+    This method isn't used, nor is it needed, but it's in "the minimum"
+    example, so it feels wrong to not have it.
+
     :param hass: HomeAssistant api reference to all of the Home Assistant data.
     :param processed: A dictionary of items which have already been setup by
         config_entries.py. This can be used to provide an order to the setup of
         the integration.
-    :returns: True if the setup was successful. If we cannot access the data,
-        an exception is thrown."""
+    :returns: True... always."""
     hass.data.setdefault(DOMAIN, {})
     return True
 
@@ -83,16 +79,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         event a communication-type excepiton occurs, Home Assistant will
         declare this entry unable to be setup, requiring a reconfiguration or
         restart to bring us back online."""
+    #setup the basic datastructure in hass.
+
     entry_location = hass.data[DOMAIN].setdefault(entry.entry_id, {})
 
+    #setup the data bridge.
     poll_delta = timedelta(seconds=POLL_INTERVAL)
     entry_location[CONF_SCAN_INTERVAL] = poll_delta
-
     bridge = get_new_data_bridge(hass, entry)
     await bridge.async_config_entry_first_refresh()
     entry_location["coordinator"] = bridge
+
+    #Setup options listener.
     entry.async_on_unload(entry.add_update_listener(opt_update_listener))
 
+    #Setup the sensors.
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     return True
 
@@ -107,7 +108,6 @@ def get_new_data_bridge(hass, entry) -> AnycubicDataBridge:
     :param entry: The config entry of item being setup.
     :returns: The data bridge for the given config entry.
     """
-
     api = MonoXAPIAdapter(entry.data[CONF_HOST], ANYCUBIC_WIFI_PORT)
     bridge = AnycubicDataBridge(hass, api, entry)
     return bridge

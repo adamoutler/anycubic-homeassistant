@@ -5,8 +5,7 @@ from typing import cast
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.const import (CONF_MODEL, ATTR_SW_VERSION, CONF_HOST,
-                                 CONF_NAME)
+from homeassistant.const import (CONF_MODEL, ATTR_SW_VERSION, CONF_HOST)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.core import HomeAssistant
 from uart_wifi.errors import ConnectionException
@@ -139,8 +138,12 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         """Return the printer api for diagnostics."""
         return self._monox
 
-
-# pylint: disable=anomalous-backslash-in-string
+    @property
+    def assumed_state(self):
+        """Return True if the device is assumed to be online.
+        This is used to provide the sensor with a default state.
+        """
+        return self._connection_retries == 0
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -148,21 +151,20 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         device object. The device object is used by Home Assistant to provide
         information about the device in the UI and in the Device Registry.
         """
-        unique_id = cast(str, self._config_entry.unique_id)
+        unique_id = cast(str, self.config_entry.unique_id)
 
         try:
             return DeviceInfo(
                 identifiers={(DOMAIN, unique_id)},
                 manufacturer=ATTR_MANUFACTURER,
-                connections=[(CONF_SERIAL, self.config_entry.data[CONF_SERIAL])
-                             ],
                 suggested_area=SUGGESTED_AREA,
                 sw_version=self.config_entry.data[ATTR_SW_VERSION],
+                supported_features=self._monox.ip_address,
                 model=self.config_entry.data[CONF_MODEL],
-                name=(self.config_entry.data[CONF_NAME] if hasattr(
-                    self.config_entry.data,
-                    CONF_NAME) else self.config_entry.data[CONF_MODEL] + " " +
-                      self.config_entry.data[CONF_SERIAL][-4:4], ))
+                name=ATTR_MANUFACTURER + " " +
+                self.config_entry.data[CONF_MODEL] + " " +
+                self.config_entry.data[CONF_SERIAL][-4:4],
+            )
 
         except AttributeError as ex:
             _LOGGER.debug(ex)
