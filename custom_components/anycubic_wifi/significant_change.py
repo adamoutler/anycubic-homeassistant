@@ -1,13 +1,15 @@
 """"Significant change support"""
 from typing import Any, Optional
-from homeassistant.core import callback
+from homeassistant.core import callback, HomeAssistant
 
-
+# pylint: disable=unused-argument
 @callback
 def async_check_significant_change(
-    self,  # pylint: disable=unused-argument
+    hass: HomeAssistant,
     old_state: str,
+    old_attrs: dict,
     new_state: str,
+    new_attrs: dict,
     **kwargs: Any
 ) -> Optional[bool]:
     """Significant Change Support. Insignificant changes are attributes only.

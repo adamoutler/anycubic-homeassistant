@@ -8,7 +8,7 @@ from .const import OPT_HIDE_IP, OPT_NO_EXTRA_DATA, OPT_HIDE_EXTRA_SENSORS, OPT_U
 
 
 class AnycubicOptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle options."""
+    """Handles options provided to the user."""
 
     def __init__(self, config_entry) -> None:
         """Initialize options flow."""
@@ -17,9 +17,12 @@ class AnycubicOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(self,
                               user_input: dict[str, Any] | None = None
                               ) -> FlowResult:
-        """Manage the options."""
+        """Manage the options. We display the options to the user from
+        this location. The first pass through we will create a form to
+        collect the options. The second pass will save them to the
+        config_entry."""
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            return self.async_create_entry(title="asdfasdf", data=user_input)
 
         return self.async_show_form(
             step_id="init",

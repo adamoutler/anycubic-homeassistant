@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 from datetime import timedelta
-from typing import Any
 
 import logging
 from homeassistant.config_entries import ConfigEntry
@@ -17,36 +16,48 @@ from homeassistant.components.sensor import SensorEntity
 from .data_bridge import AnycubicDataBridge
 from .base_entry_decorator import AnycubicEntityBaseDecorator
 
-from .const import (ATTR_LOOKUP_TABLE, DOMAIN, OPT_HIDE_EXTRA_SENSORS,
-                    PRINTER_ICON, POLL_INTERVAL)
+from .const import (
+    ATTR_LOOKUP_TABLE,
+    DOMAIN,
+    OPT_HIDE_EXTRA_SENSORS,
+    PRINTER_ICON,
+    POLL_INTERVAL,
+)
 
+# The time interval between scans
 SCAN_INTERVAL = timedelta(seconds=POLL_INTERVAL)
+
+# Logger for this class.
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
-                            async_add_entities: AddEntitiesCallback) -> None:
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+) -> None:
     """Set up the platform from config_entry. We use the config entry to get the
     IP address of the printer, and then create a data bridge to the printer. the
     data bridge will in turn initialize the API adapter, then be integrated with
     the base entity decorator and the sensor itself. The sensor will be added to
     the list of entities to be managed by Home Assistant."""
-    coordinator: AnycubicDataBridge = hass.data[DOMAIN][
-        entry.entry_id]["coordinator"]
+    coordinator: AnycubicDataBridge = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
     @callback
-    async def async_add_sensor(sensor: Any, name: str, unit: str) -> None:
+    async def async_add_sensor(name: str, unit: str) -> None:
         """Add sensor from Anycubic device into the Home Assistant entity
         registry."""
 
-        async_add_entities([
-            MonoXSensor(bridge=coordinator,
-                        hass=hass,
-                        entry=entry,
-                        native_update=name,
-                        name=name,
-                        unit=unit)
-        ])
+        async_add_entities(
+            [
+                MonoXSensor(
+                    bridge=coordinator,
+                    hass=hass,
+                    entry=entry,
+                    native_update=name,
+                    name=name,
+                    unit=unit,
+                )
+            ]
+        )
 
     async def async_add_extra_sensor(
         sensor: str,
@@ -61,16 +72,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry,
         :param name: The name of the sensor.
         :param unit: The unit of the sensor."""
 
-        async_add_entities([
-            MonoXExtraSensor(bridge=coordinator,
-                             hass=hass,
-                             entry=entry,
-                             native_update=sensor,
-                             name=name,
-                             unit=unit)
-        ])
+        async_add_entities(
+            [
+                MonoXExtraSensor(
+                    bridge=coordinator,
+                    hass=hass,
+                    entry=entry,
+                    native_update=sensor,
+                    name=name,
+                    unit=unit,
+                )
+            ]
+        )
 
-    await async_add_sensor(sensor="status", name="status", unit="")
+    await async_add_sensor(name="status", unit="")
     if not entry.options.get(OPT_HIDE_EXTRA_SENSORS):
         # pylint: disable=unused-variable
         for [sensor, name, unused, unit] in ATTR_LOOKUP_TABLE:
@@ -92,9 +107,15 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
     should_poll = True
     async_update_interval = SCAN_INTERVAL
 
-    def __init__(self, bridge: AnycubicDataBridge, hass: HomeAssistant,
-                 entry: ConfigEntry, native_update: str, name: str,
-                 unit: str) -> None:
+    def __init__(
+        self,
+        bridge: AnycubicDataBridge,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        native_update: str,
+        name: str,
+        unit: str,
+    ) -> None:
         """Initialize the sensor.
         :coordinator: The data retrieval and storage for this sensor.
         :hass: A reference to Home Assistant.
@@ -123,18 +144,26 @@ class MonoXExtraSensor(MonoXSensor):
     handle outputting the sensor data into the user interface. It includes
     SensorEntity methods to implement standard sensor functionality."""
 
-    def __init__(self, bridge: AnycubicDataBridge, hass: HomeAssistant,
-                 entry: ConfigEntry, native_update: str, name: str,
-                 unit: str) -> None:
+    def __init__(
+        self,
+        bridge: AnycubicDataBridge,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        native_update: str,
+        name: str,
+        unit: str,
+    ) -> None:
         """Initialize the sensor. We override the name of the sensor to be the
         name of the attribute. This is done to make it easier to identify the
         sensor in the UI."""
-        super().__init__(bridge=bridge,
-                         hass=hass,
-                         entry=entry,
-                         native_update=native_update,
-                         name=name,
-                         unit=unit)
+        super().__init__(
+            bridge=bridge,
+            hass=hass,
+            entry=entry,
+            native_update=native_update,
+            name=name,
+            unit=unit,
+        )
 
     @property
     def native_value(self):

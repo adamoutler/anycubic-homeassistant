@@ -1,4 +1,9 @@
-"""Handles the API for Home Assistant."""
+"""Handles the API for Home Assistant. Functionally, this class is the API for
+the Home Assistant integration. It is responsible for handling the requests from
+the Home Assistant integration and sending requests to the Mono X API pip package.
+When the API receives a response from the Mono X API, it will parse the response
+and send it to the Home Assistant integration. This class acts as an adapter for
+the pip package and as a fascade to the Home Assistant integration."""
 from __future__ import annotations
 import logging
 import time
@@ -13,6 +18,10 @@ from .const import (
     INTERNAL_FILE,
     TYPE_ML,
     UART_WIFI_PORT,
+    API_VALUE_SPLIT_CHAR,
+    API_TILDE,
+    API_STATUS,
+    API_SECONDS_ELAPSE,
 )
 from .errors import AnycubicException
 
@@ -108,7 +117,7 @@ def _find_response_of_type(
     :expected_type: the expected type of the response
 
     Returns:
-    :returns: the first object matching the type, or AnycubicMonoXAPILevel exception"""
+    :returns: the first object matching the expected type, or False if no match is found."""
     if isinstance(response, expected_type):
         return response
     for item in response:
@@ -129,11 +138,13 @@ def _parse_extras(raw_extras: dict, convert_seconds: bool) -> dict | None:
     :int: the status dictionary
     """
     extras: dict = {}
-    if not hasattr(raw_extras, "status"):
+    if not hasattr(raw_extras, API_STATUS):
+        # we received a response that does not have the status
         return extras
-    if hasattr(raw_extras, "seconds_elapse") and convert_seconds:
+    if convert_seconds and hasattr(raw_extras, API_SECONDS_ELAPSE):
+        # We need to convert the time from minutes to seconds.
         seconds_elapsed = int(raw_extras.seconds_elapse) / 60
-        raw_extras.__dict__["seconds_elapse"] = seconds_elapsed
+        raw_extras.__dict__[API_SECONDS_ELAPSE] = seconds_elapsed
 
     # Loop through all the expected sensors and add them to the extras dict
     # pylint: disable=unused-variable
@@ -145,14 +156,16 @@ def _parse_extras(raw_extras: dict, convert_seconds: bool) -> dict | None:
             try:
                 match data_type:
                     case const.TYPE_FILE:
-                        [external, internal] = raw_value.split("/")
+                        [external, internal] = raw_value.split(API_VALUE_SPLIT_CHAR)
                         extras[hass_sensor_name] = external
                         extras[INTERNAL_FILE] = internal
                     case const.TYPE_FLOAT:
                         extras[hass_sensor_name] = float(raw_value)
                     case const.TYPE_ML:
                         # get the raw numeric value of the sensor without the extra stuff
-                        int_value: int = raw_value.replace(TYPE_ML, "").replace("~", "")
+                        int_value: int = raw_value.replace(TYPE_ML, "").replace(
+                            API_TILDE, ""
+                        )
                         extras[hass_sensor_name] = int_value
                     case const.TYPE_INT:
                         extras[hass_sensor_name] = int(raw_value)
@@ -175,6 +188,7 @@ def _parse_extras(raw_extras: dict, convert_seconds: bool) -> dict | None:
         current = int(raw_extras.current_layer)
         extras[ATTR_REMAINING_LAYERS] = int(total - current)
     else:
+        # There is not enough info to calculate the remaining layers.
         extras[ATTR_REMAINING_LAYERS] = None
 
     # Add the calculated Seconds Elapsed sensor
@@ -185,6 +199,7 @@ def _parse_extras(raw_extras: dict, convert_seconds: bool) -> dict | None:
         elapsed = int(raw_extras.seconds_elapse)
         extras[ATTR_TOTAL_TIME] = _seconds_to_hhmmss(elapsed + remain)
     else:
+        # There is not enough info to calculate the total time.
         extras[ATTR_TOTAL_TIME] = None
 
     return extras

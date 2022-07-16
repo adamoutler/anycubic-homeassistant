@@ -5,15 +5,22 @@ from typing import cast
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.const import (CONF_MODEL, ATTR_SW_VERSION, CONF_HOST)
+from homeassistant.const import CONF_MODEL, ATTR_SW_VERSION, CONF_HOST
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.core import HomeAssistant
 from uart_wifi.errors import ConnectionException
 
 from .errors import AnycubicException
-from .const import (CONF_SERIAL, POLL_INTERVAL, ATTR_MANUFACTURER, DOMAIN,
-                    STATUS_OFFLINE, SUGGESTED_AREA, OPT_NO_EXTRA_DATA,
-                    CONVERT_SECONDS_MODEL)
+from .const import (
+    CONF_SERIAL,
+    POLL_INTERVAL,
+    ATTR_MANUFACTURER,
+    DOMAIN,
+    STATUS_OFFLINE,
+    SUGGESTED_AREA,
+    OPT_NO_EXTRA_DATA,
+    CONVERT_SECONDS_MODEL,
+)
 from .adapter_fascade import MonoXAPIAdapter
 
 _LOGGER = logging.getLogger(__name__)
@@ -26,7 +33,7 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     by the DataUpdateCoordinator. The DataBridge is responsible for outputting
     requests to the MonoX API and parsing the responses. The DataBridge is
     also responsible for handling the errors that may occur during the update
-    process. """
+    process."""
 
     # Reported status extras is parsed from the status object and contains
     # extra state attributes for the sensor.
@@ -47,8 +54,9 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     # we don't spam the logs with offline messages.
     _connection_retries: int = 0
 
-    def __init__(self, hass: HomeAssistant, monox: MonoXAPIAdapter,
-                 config_entry: ConfigEntry) -> None:
+    def __init__(
+        self, hass: HomeAssistant, monox: MonoXAPIAdapter, config_entry: ConfigEntry
+    ) -> None:
         """Initialize the DataBridge.  Here we initialize the coordinator
         and set up the variables that will be used to update the data.
         :param hass: HomeAssistant the Home Assistant instance
@@ -66,8 +74,7 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         )
         self._config_entry = config_entry
         self._monox = monox
-        self._convert_seconds = CONVERT_SECONDS_MODEL in config_entry.data[
-            CONF_MODEL]
+        self._convert_seconds = CONVERT_SECONDS_MODEL in config_entry.data[CONF_MODEL]
 
     async def _async_update_data(self):
         """Update data via API. On the first sync this method will provide
@@ -75,10 +82,12 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         deivce status.  On subsequent syncs, this method will provide device status.
         Failures to obtain data will result in the DataBridge being marked as
         offline. The sensor will respond to offline status as being unavailble."""
+        ex = None
         try:
             [current_status, extras] = self._monox.get_current_status(
                 convert_seconds=self._convert_seconds,
-                no_extras=self._config_entry.options[OPT_NO_EXTRA_DATA])
+                no_extras=self._config_entry.options[OPT_NO_EXTRA_DATA],
+            )
             if current_status:
                 # We have connection, so we can reset the connection retries.
                 self._connection_retries = 0
@@ -91,19 +100,22 @@ class AnycubicDataBridge(DataUpdateCoordinator):
                 # hass.data['unique_id']['status'] and we pick it up
                 # in the sensor without needing to store it.
                 return current_status
-        except (AnycubicException, ConnectionException,
-                ConnectionRefusedError):
+        except (
+            AnycubicException,
+            ConnectionException,
+            ConnectionRefusedError,
+        ) as execption:
             # This is probably a connectivity error, these devices have poor
             # wifi connectivity and are often offline.
-            pass
+            ex = execption
 
-        return self.debounce_failure_response()
+        return self.debounce_failure_response(ex)
 
     def _maybe_record_status_extras(self, extras):
         if not self._config_entry.options[OPT_NO_EXTRA_DATA]:
             self._reported_status_extras.update(extras)
 
-    def debounce_failure_response(self):
+    def debounce_failure_response(self, execption: Exception):
         """Debounce the data bridge.  These devices have very poor wifi
         connectivity. We don't want to spam the logs with offline messages.
         Instead, we want to debounce the failure response and only report
@@ -113,8 +125,13 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         """
         self._connection_retries += 1
         if self._connection_retries > 5:
-            raise UpdateFailed("Failed to obtain status from device.")
-        #Report the offline status.
+            if execption is not None:
+                raise UpdateFailed(
+                    "Failed to obtain status from device."
+                ) from execption
+            else:
+                raise UpdateFailed("Failed to obtain status from device.")
+        # Report the offline status.
         return STATUS_OFFLINE
 
     def is_online(self):
@@ -126,12 +143,12 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         """If the extra data does not already contain the host, add it.
         This is used to provide the host to the sensor extras."""
         if not self._config_entry.options[OPT_NO_EXTRA_DATA] and not hasattr(
-                self._reported_status_extras, CONF_HOST):
-            self._reported_status_extras.update(
-                {CONF_HOST: self._monox.ip_address})
+            self._reported_status_extras, CONF_HOST
+        ):
+            self._reported_status_extras.update({CONF_HOST: self._monox.ip_address})
 
     def get_last_status_extras(self):
-        """"provide a public method to give the last status extras for the sensor."""
+        """ "provide a public method to give the last status extras for the sensor."""
         return self._reported_status_extras
 
     def get_printer(self):
@@ -161,9 +178,11 @@ class AnycubicDataBridge(DataUpdateCoordinator):
                 sw_version=self.config_entry.data[ATTR_SW_VERSION],
                 supported_features=self._monox.ip_address,
                 model=self.config_entry.data[CONF_MODEL],
-                name=ATTR_MANUFACTURER + " " +
-                self.config_entry.data[CONF_MODEL] + " " +
-                self.config_entry.data[CONF_SERIAL][-4:4],
+                name=ATTR_MANUFACTURER
+                + " "
+                + self.config_entry.data[CONF_MODEL]
+                + " "
+                + self.config_entry.data[CONF_SERIAL][-4:4],
             )
 
         except AttributeError as ex:
