@@ -6,11 +6,17 @@ from typing import Type, Union
 from uart_wifi.communication import UartWifi
 from uart_wifi.response import MonoXResponseType, MonoXStatus, MonoXSysInfo
 from . import const
-from .const import (ATTR_REMAINING_LAYERS, ATTR_TOTAL_TIME, ATTR_LOOKUP_TABLE, INTERNAL_FILE,
-                     TYPE_ML,
-                    UART_WIFI_PORT)
+from .const import (
+    ATTR_REMAINING_LAYERS,
+    ATTR_TOTAL_TIME,
+    ATTR_LOOKUP_TABLE,
+    INTERNAL_FILE,
+    TYPE_ML,
+    UART_WIFI_PORT,
+)
 from .errors import AnycubicException
 
+# Logger for the class.
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -35,8 +41,8 @@ class MonoXAPIAdapter(UartWifi):
         self.port = port
 
     def get_current_status(
-            self, convert_seconds: bool,
-            no_extras: bool) -> Union[MonoXStatus, dict] | bool:
+        self, convert_seconds: bool, no_extras: bool
+    ) -> Union[MonoXStatus, dict] | bool:
         """Get the MonoX Status.  Waits for a maximum of 5 seconds.
 
         Parameters:
@@ -55,7 +61,8 @@ class MonoXAPIAdapter(UartWifi):
             _LOGGER.debug("Collecting Status")
             respone_stream = self.send_request("getstatus,\r\n")
             status: MonoXStatus = _find_response_of_type(
-                response=respone_stream, expected_type=MonoXStatus)
+                response=respone_stream, expected_type=MonoXStatus
+            )
             if status:
                 extras = {}
                 if not no_extras:
@@ -76,8 +83,7 @@ class MonoXAPIAdapter(UartWifi):
         try:
             _LOGGER.debug("Collecting Sysinfo")
             response = self.send_request("sysinfo,\r\n")
-            return _find_response_of_type(response=response,
-                                         expected_type=MonoXSysInfo)
+            return _find_response_of_type(response=response, expected_type=MonoXSysInfo)
         except (OSError, RuntimeError) as ex:
             raise AnycubicException from ex
         finally:
@@ -125,42 +131,56 @@ def _parse_extras(raw_extras: dict, convert_seconds: bool) -> dict | None:
     extras: dict = {}
     if not hasattr(raw_extras, "status"):
         return extras
-    if hasattr(raw_extras, 'seconds_elapse') and convert_seconds:
-        seconds_elapsed = int(raw_extras.seconds_elapse)/60
-        raw_extras.__dict__['seconds_elapse'] = seconds_elapsed
+    if hasattr(raw_extras, "seconds_elapse") and convert_seconds:
+        seconds_elapsed = int(raw_extras.seconds_elapse) / 60
+        raw_extras.__dict__["seconds_elapse"] = seconds_elapsed
 
+    # Loop through all the expected sensors and add them to the extras dict
     # pylint: disable=unused-variable
-    for [internal_attr, hass_attr, handling,unit] in ATTR_LOOKUP_TABLE:
-        if hasattr(raw_extras, internal_attr):
-            raw_value = getattr(raw_extras, internal_attr)
-            match handling:
-                case const.TYPE_FILE:
-                    [external,internal]= raw_value.split("/")
-                    extras[hass_attr] = external
-                    extras[INTERNAL_FILE]= internal
-                case const.TYPE_FLOAT :
-                    extras[hass_attr] = float(raw_value)
-                case const.TYPE_ML :
-                    raw_value = raw_value.replace(TYPE_ML, "").replace("~", "")
-                    extras[hass_attr] = int(raw_value)
-                case const.TYPE_INT :
-                    extras[hass_attr] = int(raw_value)
-                case const.TYPE_TIME:
-                    extras[hass_attr] = _seconds_to_hhmmss(raw_value)
-                case const.TYPE_STRING:
-                    extras[hass_attr] = raw_value
-                case _:
-                    extras[hass_attr] = raw_value
-        else:
-            extras[hass_attr] = None
+    for [api_sensor_name, hass_sensor_name, data_type, unit] in ATTR_LOOKUP_TABLE:
+        # if the sensor data is present, parse the data
+        if hasattr(raw_extras, api_sensor_name):
+            raw_value = getattr(raw_extras, api_sensor_name)
+            # parse the data based on the expected data type.
+            try:
+                match data_type:
+                    case const.TYPE_FILE:
+                        [external, internal] = raw_value.split("/")
+                        extras[hass_sensor_name] = external
+                        extras[INTERNAL_FILE] = internal
+                    case const.TYPE_FLOAT:
+                        extras[hass_sensor_name] = float(raw_value)
+                    case const.TYPE_ML:
+                        # get the raw numeric value of the sensor without the extra stuff
+                        int_value: int = raw_value.replace(TYPE_ML, "").replace("~", "")
+                        extras[hass_sensor_name] = int_value
+                    case const.TYPE_INT:
+                        extras[hass_sensor_name] = int(raw_value)
+                    case const.TYPE_TIME:
+                        extras[hass_sensor_name] = _seconds_to_hhmmss(raw_value)
+                    case const.TYPE_STRING:
+                        extras[hass_sensor_name] = raw_value
+                    case _:
+                        extras[hass_sensor_name] = raw_value
+            except ValueError:
+                # if the data is not in expected format, add it as a raw value
+                extras[hass_sensor_name] = raw_value
 
-    if hasattr(raw_extras, 'current_layer') and hasattr(raw_extras, 'total_layers'):
+        else:  # if the sensor data is not present, set a None value
+            extras[hass_sensor_name] = None
+
+    # Add the calculated Remaining Layers sensor
+    if hasattr(raw_extras, "current_layer") and hasattr(raw_extras, "total_layers"):
         total = int(raw_extras.total_layers)
         current = int(raw_extras.current_layer)
         extras[ATTR_REMAINING_LAYERS] = int(total - current)
     else:
         extras[ATTR_REMAINING_LAYERS] = None
-    if hasattr(raw_extras, 'seconds_elapse') and hasattr(raw_extras, 'seconds_remaining'):
+
+    # Add the calculated Seconds Elapsed sensor
+    if hasattr(raw_extras, "seconds_elapse") and hasattr(
+        raw_extras, "seconds_remaining"
+    ):
         remain = int(raw_extras.seconds_remaining)
         elapsed = int(raw_extras.seconds_elapse)
         extras[ATTR_TOTAL_TIME] = _seconds_to_hhmmss(elapsed + remain)
@@ -171,10 +191,11 @@ def _parse_extras(raw_extras: dict, convert_seconds: bool) -> dict | None:
 
 
 def _seconds_to_hhmmss(raw_value):
-    """Convert the raw seconds to a string of the form HH:MM:SS.
+    """Convert the raw seconds to the standard defined by
+    Home assistant of form: h:min:s.
     :raw_value: the time to convert, in seconds."""
     gmt_time = time.gmtime(int(raw_value))
-    hhmmss = time.strftime('%H:%M:%S', gmt_time)
+    hhmmss = time.strftime("%H:%M:%S", gmt_time)
     return hhmmss
 
 

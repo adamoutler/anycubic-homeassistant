@@ -6,26 +6,30 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.const import CONF_HOST, CONF_MODEL
-from .const import OPT_HIDE_EXTRA_SENSORS, OPT_HIDE_IP, OPT_NO_EXTRA_DATA, OPT_USE_PICTURE
+from .const import (
+    OPT_HIDE_EXTRA_SENSORS,
+    OPT_HIDE_IP,
+    OPT_NO_EXTRA_DATA,
+    OPT_USE_PICTURE,
+)
 from .img.anycubic import AnycubicImages
-
 from . import AnycubicDataBridge
 
 
-class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge],
-                                  Entity):
+class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge], Entity):
     """Base common to all MonoX entities."""
 
-    def __init__(self, entry: ConfigEntry, bridge: AnycubicDataBridge,
-                 name: str) -> None:
+    def __init__(
+        self, entry: ConfigEntry, bridge: AnycubicDataBridge, name: str
+    ) -> None:
         """Initialize the base MonoX entity object.
         :param entry: the configuration data.
         :param coordinator: the processing and storage of updates.
         :param name: the name of the sensor.
         """
         self.entry = entry
-        #Make it shorter to prevent elipses when displayed in UI.
-        #Instead of "Photon Mono X 6K Status", use "Mono X 6K Status"
+        # Make it shorter to prevent elipses when displayed in UI.
+        # Instead of "Photon Mono X 6K Status", use "Mono X 6K Status"
         model = entry.data[CONF_MODEL].replace("Photon ", "")
         self.sensor_attr_name = name
         self._attr_name = model + " " + name
@@ -79,8 +83,9 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge],
         thus resulting in a mdi:printer icon.
         :return: the entity picture if the user has opted to use it."""
         if self.entry.options[OPT_USE_PICTURE]:
-            if ('model' in self.entry.data and str(
-                    self.entry.data["model"]).startswith("Photon Mono X")):
+            if "model" in self.entry.data and str(self.entry.data["model"]).startswith(
+                "Photon Mono X"
+            ):
                 return AnycubicImages.MONO_X_IMAGE
         return None
 
@@ -92,12 +97,14 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge],
         is in control of these settings via options.
         :return: the state attributes unless otherwise blocked."""
         extras = self.bridge.get_last_status_extras()
-        #If no extras or hide extras is set, then we don't use the reported extras.
-        if self.entry.options[OPT_NO_EXTRA_DATA] or not self.entry.options[
-                OPT_HIDE_EXTRA_SENSORS]:
+        # If user option no extras or hide extras is set, then we dont report them.
+        if (
+            self.entry.options[OPT_NO_EXTRA_DATA]
+            or not self.entry.options[OPT_HIDE_EXTRA_SENSORS]
+        ):
             extras = {}
 
-        #if Hide IP is set, then we hide the IP as well.
+        # if user option Hide IP is set, then we hide the IP as well.
         if not self.entry.options[OPT_HIDE_IP]:
             extras.update({CONF_HOST: self.entry.data[CONF_HOST]})
         return extras
