@@ -24,8 +24,12 @@
     "Zmove"
   ],
   "python.analysis.extraPaths": ["/workspaces/anycubic-python/src"],
-  "python.formatting.provider": "yapf",
+  "python.formatting.provider": "black",
   "files.associations": {
     "*.yaml": "home-assistant"
-  }
+  },
+  "python.analysis.completeFunctionParens": true,
+  "python.analysis.diagnosticMode": "workspace",
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.inlayHints.variableTypes": true
 }
