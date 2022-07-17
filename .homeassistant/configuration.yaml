@@ -1,9 +1,21 @@
 # Loads default set of integrations. Do not remove.
-default_config:
 
-# Text to speech
-tts:
-  - platform: google_translate
+config:
+counter:
+dhcp:
+frontend:
+map:
+my:
+sun:
+script:
+ssdp:
+tag:
+timer:
+usb:
+webhook:
+zeroconf:
+zone:
+
 homeassistant:
   auth_providers:
     - type: trusted_networks
@@ -11,6 +23,3 @@ homeassistant:
         - 0.0.0.0/0
       allow_bypass_login: true
     - type: homeassistant
-automation: !include automations.yaml
-script: !include scripts.yaml
-scene: !include scenes.yaml
