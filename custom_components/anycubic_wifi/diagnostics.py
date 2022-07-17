@@ -18,7 +18,9 @@ async def async_get_config_entry_diagnostics(
     """Return diagnostics for a config entry. Here we dump everything
     we know about the config entry, integration, and the data bridge.
     This makes it easier to audit the data and debug issues."""
-    bridge: AnycubicDataBridge = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
+    bridge: AnycubicDataBridge = hass.data[DOMAIN][config_entry.entry_id][
+        "coordinator"
+    ]
 
     entry_data = {}
     entry_data["config_entry"] = {
@@ -56,7 +58,10 @@ def safe_dump(the_object):
     _LOGGER.debug("Dumping object: %s %s", the_object, type(the_object))
     if isinstance(the_object, (int, float, str, bool, complex, NoneType)):
         return the_object
-    elif str(the_object.__class__) in ["<class 'mappingproxy'>", "<class 'dict'>"]:
+    elif str(the_object.__class__) in [
+        "<class 'mappingproxy'>",
+        "<class 'dict'>",
+    ]:
         the_dict = the_object
     else:
         the_dict = the_object.__dict__

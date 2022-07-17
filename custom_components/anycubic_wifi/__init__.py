@@ -30,9 +30,9 @@ from homeassistant.helpers.device_registry import DeviceRegistry
 
 from .data_bridge import AnycubicDataBridge
 from .adapter_fascade import MonoXAPIAdapter
-from .const import (DOMAIN, PLATFORMS, POLL_INTERVAL, ANYCUBIC_WIFI_PORT)
+from .const import DOMAIN, PLATFORMS, POLL_INTERVAL, ANYCUBIC_WIFI_PORT
 
-#Logger for the class.
+# Logger for the class.
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -48,7 +48,9 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not hass.config_entries.flow.async_progress_by_handler(DOMAIN):
         hass.async_create_task(
             hass.config_entries.flow.async_init(
-                DOMAIN, context={"source": SOURCE_IMPORT}))
+                DOMAIN, context={"source": SOURCE_IMPORT}
+            )
+        )
     return True
 
 
@@ -79,21 +81,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         event a communication-type excepiton occurs, Home Assistant will
         declare this entry unable to be setup, requiring a reconfiguration or
         restart to bring us back online."""
-    #setup the basic datastructure in hass.
+    # setup the basic datastructure in hass.
 
     entry_location = hass.data[DOMAIN].setdefault(entry.entry_id, {})
 
-    #setup the data bridge.
+    # setup the data bridge.
     poll_delta = timedelta(seconds=POLL_INTERVAL)
     entry_location[CONF_SCAN_INTERVAL] = poll_delta
     bridge = get_new_data_bridge(hass, entry)
     await bridge.async_config_entry_first_refresh()
     entry_location["coordinator"] = bridge
 
-    #Setup options listener.
+    # Setup options listener.
     entry.async_on_unload(entry.add_update_listener(opt_update_listener))
 
-    #Setup the sensors.
+    # Setup the sensors.
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     return True
 
@@ -123,17 +125,18 @@ async def opt_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
         will trigger a new entity setup.
     :param hass: HomeAssistant api reference to all of the Home Assistant data.
     :param entry: The config entry of item being setup."""
-    #find and remove the device from the registry
-    registry: DeviceRegistry = hass.data['device_registry']
+    # find and remove the device from the registry
+    registry: DeviceRegistry = hass.data["device_registry"]
     device = registry.async_get_device(identifiers=[(DOMAIN, entry.unique_id)])
     registry.async_remove_device(device.id)
-    #setup the device again
+    # setup the device again
     await async_setup_entry(hass, entry)
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-def get_existing_bridge(hass: HomeAssistant,
-                        entry: ConfigEntry) -> AnycubicDataBridge:
+def get_existing_bridge(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> AnycubicDataBridge:
     """Get the data bridge for the given config entry.  The data bridge is
         a Home Assistant coordinator which is responsible for managing the
         data collection and preparation for the sensor entities. The bridge
@@ -142,17 +145,20 @@ def get_existing_bridge(hass: HomeAssistant,
     :param hass: HomeAssistant api reference to all of the Home Assistant data.
     :param entry: The config entry of item being setup.
     :returns: The data bridge for the given config entry."""
-    bridge: AnycubicDataBridge = hass.data[DOMAIN][
-        entry.entry_id]["coordinator"]
+    bridge: AnycubicDataBridge = hass.data[DOMAIN][entry.entry_id][
+        "coordinator"
+    ]
     return bridge
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload the provided config entry. This is a sad procedure. We will clean
-        up the mess we made, and Home Assistant will remove the assigned entries.
+        up the mess we made, and Home Assistant will remove the assigned
+        entries.
     :param hass: HomeAssistant api reference to all of the Home Assistant data.
-    :param entry: The config entry of item being setup. """
+    :param entry: The config entry of item being setup."""
     if unload_ok := await hass.config_entries.async_unload_platforms(
-            entry, PLATFORMS):
+        entry, PLATFORMS
+    ):
         hass.data[DOMAIN].pop(entry.entry_id)
     return unload_ok

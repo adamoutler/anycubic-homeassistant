@@ -6,7 +6,10 @@ from typing import cast
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.const import CONF_MODEL, ATTR_SW_VERSION, CONF_HOST
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import (
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 from homeassistant.core import HomeAssistant
 from uart_wifi.errors import ConnectionException
 
@@ -39,8 +42,8 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     # extra state attributes for the sensor.
     _reported_status_extras: dict = {}
 
-    # Certain MonoX devices measure elapsed time in seconds, while others measure
-    # time in minutes.
+    # Certain MonoX devices measure elapsed time in seconds, while others
+    # measure time in minutes.
     _convert_seconds: bool = False
 
     # Mono X API Adapter provides limited access to the MonoX API and performs
@@ -55,7 +58,10 @@ class AnycubicDataBridge(DataUpdateCoordinator):
     _connection_retries: int = 0
 
     def __init__(
-        self, hass: HomeAssistant, monox: MonoXAPIAdapter, config_entry: ConfigEntry
+        self,
+        hass: HomeAssistant,
+        monox: MonoXAPIAdapter,
+        config_entry: ConfigEntry,
     ) -> None:
         """Initialize the DataBridge.  Here we initialize the coordinator
         and set up the variables that will be used to update the data.
@@ -74,14 +80,17 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         )
         self._config_entry = config_entry
         self._monox = monox
-        self._convert_seconds = CONVERT_SECONDS_MODEL in config_entry.data[CONF_MODEL]
+        self._convert_seconds = (
+            CONVERT_SECONDS_MODEL in config_entry.data[CONF_MODEL]
+        )
 
     async def _async_update_data(self):
         """Update data via API. On the first sync this method will provide
         device information by establishing the system information, then provide
-        deivce status.  On subsequent syncs, this method will provide device status.
-        Failures to obtain data will result in the DataBridge being marked as
-        offline. The sensor will respond to offline status as being unavailble."""
+        deivce status.  On subsequent syncs, this method will provide device
+        status. Failures to obtain data will result in the DataBridge being
+        marked as offline. The sensor will respond to offline status as being
+        unavailble."""
         ex = None
         try:
             [current_status, extras] = self._monox.get_current_status(
@@ -136,7 +145,8 @@ class AnycubicDataBridge(DataUpdateCoordinator):
 
     def is_online(self):
         """Return True if the device is online. We can detect this by checking
-        the connection retries. If they are 0, then we know the device is online."""
+        the connection retries. If they are 0, then we know the device is
+        online."""
         return self._connection_retries == 0
 
     def _maybe_add_host_to_extras(self):
@@ -145,10 +155,13 @@ class AnycubicDataBridge(DataUpdateCoordinator):
         if not self._config_entry.options[OPT_NO_EXTRA_DATA] and not hasattr(
             self._reported_status_extras, CONF_HOST
         ):
-            self._reported_status_extras.update({CONF_HOST: self._monox.ip_address})
+            self._reported_status_extras.update(
+                {CONF_HOST: self._monox.ip_address}
+            )
 
     def get_last_status_extras(self):
-        """ "provide a public method to give the last status extras for the sensor."""
+        """Provide a public method to give the last status extras for the
+        sensor."""
         return self._reported_status_extras
 
     def get_printer(self):

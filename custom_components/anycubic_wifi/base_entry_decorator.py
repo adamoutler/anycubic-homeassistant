@@ -1,7 +1,8 @@
-"""Base classes for Anycubic Wifi entities. This class provides standard methods which are
-    universal for all Anycubic Wifi entities. The base class provides access to the Anycubic
-    data bridge, and by integrating with the Coordinator component, provides a standard way to
-    handle the data update procedure."""
+"""Base classes for Anycubic Wifi entities. This class provides standard
+    methods which are universal for all Anycubic Wifi entities. The base class
+    provides access to the Anycubic data bridge, and by integrating with the
+    Coordinator component, provides a standard way to handle the data update
+    procedure."""
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import DeviceInfo, Entity
@@ -16,7 +17,9 @@ from .img.anycubic import AnycubicImages
 from . import AnycubicDataBridge
 
 
-class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge], Entity):
+class AnycubicEntityBaseDecorator(
+    CoordinatorEntity[AnycubicDataBridge], Entity
+):
     """Base common to all MonoX entities."""
 
     def __init__(
@@ -77,27 +80,28 @@ class AnycubicEntityBaseDecorator(CoordinatorEntity[AnycubicDataBridge], Entity)
     def _attr_entity_picture(self) -> str:
         """Return the entity picture. If this is a MonoX, we return a picture
         of the Mono X style printer.  While slight variances exist in the X,
-        4K, and 6K printers, the Entity Picture is 100x100 pixels, and variances
-        in the models are not expected to be distinguishable. In the event
-        another device is detected, the Entity Picture will not be displayed,
-        thus resulting in a mdi:printer icon.
+        4K, and 6K printers, the Entity Picture is 100x100 pixels, and
+        variances in the models are not expected to be distinguishable. In the
+        event another device is detected, the Entity Picture will not be
+        displayed, thus resulting in a mdi:printer icon.
         :return: the entity picture if the user has opted to use it."""
         if self.entry.options[OPT_USE_PICTURE]:
-            if "model" in self.entry.data and str(self.entry.data["model"]).startswith(
-                "Photon Mono X"
-            ):
+            if "model" in self.entry.data and str(
+                self.entry.data["model"]
+            ).startswith("Photon Mono X"):
                 return AnycubicImages.MONO_X_IMAGE
         return None
 
     @property
     def extra_state_attributes(self) -> dict:
-        """Return the state attributes. These are hidden if the user has not selected
-        to display a single sensor, or if the extras are disabled. The Host name will
-        be placed into the extras unless the user has disabled the option. The user
-        is in control of these settings via options.
+        """Return the state attributes. These are hidden if the user has not
+        selected  to display a single sensor, or if the extras are disabled.
+        The Host name will be placed into the extras unless the user has
+        disabled the option. The user is in control of these settings via
+        options.
         :return: the state attributes unless otherwise blocked."""
         extras = self.bridge.get_last_status_extras()
-        # If user option no extras or hide extras is set, then we dont report them.
+        # If user option no extras or hide extras is set, then we dont report.
         if (
             self.entry.options[OPT_NO_EXTRA_DATA]
             or not self.entry.options[OPT_HIDE_EXTRA_SENSORS]

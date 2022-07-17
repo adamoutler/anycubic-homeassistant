@@ -2,15 +2,10 @@
 from typing import Any, Optional
 from homeassistant.core import callback, HomeAssistant
 
-# pylint: disable=unused-argument
+
 @callback
 def async_check_significant_change(
-    hass: HomeAssistant,
-    old_state: str,
-    old_attrs: dict,
-    new_state: str,
-    new_attrs: dict,
-    **kwargs: Any
+    hass: HomeAssistant, old_state: str, new_state: str, _: Any, **kwargs: Any
 ) -> Optional[bool]:
     """Significant Change Support. Insignificant changes are attributes only.
     :old_state: the previous state of the sensor.

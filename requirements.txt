@@ -1,2 +1,6 @@
 homeassistant
 uart-wifi
+pytest
+tox
+black
+flake8

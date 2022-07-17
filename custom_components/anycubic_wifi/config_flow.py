@@ -54,12 +54,14 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self.serial = None
         self.data: dict = {}
 
-    async def async_step_dhcp(self, discovery_info: dhcp.DhcpServiceInfo) -> FlowResult:
+    async def async_step_dhcp(
+        self, discovery_info: dhcp.DhcpServiceInfo
+    ) -> FlowResult:
         """This is where the Home Assistant calls up this config flow with any
-        discovered devices, matching the dhcp profile specified in the manifest.json
-        Here we create a dictionary and pass it on to the next steps in the config
-        flow.  The overall flow from this point is dhcp->duplicate_detection->user
-        confirmation."""
+        discovered devices, matching the dhcp profile specified in the
+        manifest.json. Here we create a dictionary and pass it on to the next
+        steps in the config flow.  The overall flow from this point is
+        dhcp->duplicate_detection->user confirmation."""
         if discovery_info.ip is not None:
             discovered_information = {
                 CONF_HOST: str(discovery_info.ip),
@@ -67,7 +69,8 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             }
             try:
                 self.async_step_duplicates(discovered_information)
-                # Before adding the device, we pass it into the user confirmation step.
+                # Before adding the device, we pass it into the user
+                # confirmation step.
                 return await self.async_step_user()
             except ValueError:
                 # Don't spam the logs because this device just came back online
@@ -90,7 +93,9 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             description_placeholders=user_input,
             data_schema=DETECTION_SCHEMA,
-            errors=user_input["errors"] if hasattr(user_input, "errors") else None,
+            errors=user_input["errors"]
+            if hasattr(user_input, "errors")
+            else None,
         )
 
     async def async_step_duplicates(self, device: dict) -> None:
@@ -99,7 +104,9 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         # Abort if serial is configured
         self._add_device_info_to_device(device)
         await self.async_set_unique_id(device[CONF_SERIAL])
-        self._abort_if_unique_id_configured(updates={CONF_HOST: device[CONF_HOST]})
+        self._abort_if_unique_id_configured(
+            updates={CONF_HOST: device[CONF_HOST]}
+        )
         # Check entries to see if they have been discovered previously
         entries = self._async_current_entries()
         for entry in entries:
@@ -118,7 +125,9 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         system_information: MonoXSysInfo() = adapter.sysinfo()
         device.update(self.map_sysinfo_to_data(system_information))
 
-    async def async_step_finish(self, discovered_information: dict) -> FlowResult:
+    async def async_step_finish(
+        self, discovered_information: dict
+    ) -> FlowResult:
         """Gather information from a discovered device.  This is the final step
         in the config flow. We perform final checks and then gather the system
         information and especially record the serial number as a device-unique

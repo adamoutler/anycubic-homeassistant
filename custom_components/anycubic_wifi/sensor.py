@@ -32,14 +32,19 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the platform from config_entry. We use the config entry to get the
-    IP address of the printer, and then create a data bridge to the printer. the
-    data bridge will in turn initialize the API adapter, then be integrated with
-    the base entity decorator and the sensor itself. The sensor will be added to
-    the list of entities to be managed by Home Assistant."""
-    coordinator: AnycubicDataBridge = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    """Set up the platform from config_entry. We use the config entry to get
+    the IP address of the printer, and then create a data bridge to the
+    printer. the data bridge will in turn initialize the API adapter, then be
+    integrated with the base entity decorator and the sensor itself. The
+    sensor will be added to the list of entities to be managed by Home
+    Assistant."""
+    coordinator: AnycubicDataBridge = hass.data[DOMAIN][entry.entry_id][
+        "coordinator"
+    ]
 
     @callback
     async def async_add_sensor(name: str, unit: str) -> None:
@@ -99,7 +104,8 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
     the methods required by the AnycubicEntityBaseDecorator to handle the data
     retrieval and storage.
 
-    It includes SensorEntity methods to implement standard sensor functionality.
+    It includes SensorEntity methods to implement standard sensor
+    functionality.
     """
 
     _attr_icon = PRINTER_ICON
