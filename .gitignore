@@ -3,7 +3,7 @@ src/uart_wifi/__pycache__/
 src/uart_wifi.egg-info/
 dist/
 build/
-.homeassistant/
+.homeassistant/*
 
 __pycache__/
 *.py[cod]
