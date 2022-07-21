@@ -59,7 +59,6 @@ async def async_setup_entry(
                     entry=entry,
                     native_update=name,
                     name=name,
-                    unit=unit,
                 )
             ]
         )
@@ -90,10 +89,9 @@ async def async_setup_entry(
             ]
         )
 
-    await async_add_sensor(name="status", unit="")
+    await async_add_sensor(name="status")
     if not entry.options.get(OPT_HIDE_EXTRA_SENSORS):
-        # pylint: disable=unused-variable
-        for [sensor, name, unused, unit] in ATTR_LOOKUP_TABLE:
+        for [sensor, name, _, unit] in ATTR_LOOKUP_TABLE:
             await async_add_extra_sensor(sensor, name, unit)
 
 
@@ -109,7 +107,6 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
     """
 
     _attr_icon = PRINTER_ICON
-    _attr_device_class = "3D Printer"
     should_poll = True
     async_update_interval = SCAN_INTERVAL
 
@@ -120,7 +117,6 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
         entry: ConfigEntry,
         native_update: str,
         name: str,
-        unit: str,
     ) -> None:
         """Initialize the sensor.
         :coordinator: The data retrieval and storage for this sensor.
@@ -130,14 +126,14 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
         super().__init__(entry=entry, bridge=bridge, name=name)
         self.hass = hass
         self.native_update = native_update
-        self._attr_native_unit_of_measurement = unit
 
     @property
-    def native_value(self):
+    def state(self):
         """Return sensor state. Since this value is not processed, and delivered
         directly to the sensor, it is considered a native value.  This can be
         overridden by home assistant user to provide a custom value."""
-        return self.bridge.data.status
+        self._attr_state = self.bridge.data.status
+        return self._attr_state
 
     async def async_update(self):
         """Update the sensor value when requested by Home Assistant."""
