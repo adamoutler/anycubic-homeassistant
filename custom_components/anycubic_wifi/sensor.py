@@ -47,10 +47,10 @@ async def async_setup_entry(
     ]
 
     @callback
-    async def async_add_sensor(name: str, unit: str) -> None:
+    async def async_add_sensor() -> None:
         """Add sensor from Anycubic device into the Home Assistant entity
         registry."""
-
+        name = "status"
         async_add_entities(
             [
                 MonoXSensor(
@@ -89,7 +89,7 @@ async def async_setup_entry(
             ]
         )
 
-    await async_add_sensor(name="status")
+    await async_add_sensor()
     if not entry.options.get(OPT_HIDE_EXTRA_SENSORS):
         for [sensor, name, _, unit] in ATTR_LOOKUP_TABLE:
             await async_add_extra_sensor(sensor, name, unit)
