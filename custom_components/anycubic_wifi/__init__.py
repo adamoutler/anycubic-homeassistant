@@ -13,7 +13,7 @@ creating the integration representation in hass.data.
 #                    \/
 #  Device Info < Data Bridge > adapter fascade > uart-wifi pip > 3D Printer
 #                    \/
-#               sensor entity
+#                 entities
 
 from __future__ import annotations
 from datetime import timedelta
@@ -54,8 +54,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-# pylint: disable=unused-argument
-async def async_setup(hass: HomeAssistant, processed: ConfigType) -> bool:
+async def async_setup(hass: HomeAssistant, _: ConfigType) -> bool:
     """UNUSED.
     This method isn't used, nor is it needed, but it's in "the minimum"
     example, so it feels wrong to not have it.

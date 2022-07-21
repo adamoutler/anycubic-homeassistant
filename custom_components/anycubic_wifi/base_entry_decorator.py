@@ -85,7 +85,9 @@ class AnycubicEntityBaseDecorator(
         event another device is detected, the Entity Picture will not be
         displayed, thus resulting in a mdi:printer icon.
         :return: the entity picture if the user has opted to use it."""
+        # If the user selected the option..
         if self.entry.options[OPT_USE_PICTURE]:
+            # If we have a relevant picture, return it.
             if "model" in self.entry.data and str(
                 self.entry.data["model"]
             ).startswith("Photon Mono X"):

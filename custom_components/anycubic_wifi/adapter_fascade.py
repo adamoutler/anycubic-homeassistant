@@ -153,12 +153,11 @@ def _parse_extras(raw_extras: dict, convert_seconds: bool) -> dict | None:
         raw_extras.__dict__[API_SECONDS_ELAPSE] = seconds_elapsed
 
     # Loop through all the expected sensors and add them to the extras dict
-    # pylint: disable=unused-variable
     for [
         api_sensor_name,
         hass_sensor_name,
         data_type,
-        unit,
+        _,
     ] in ATTR_LOOKUP_TABLE:
         # if the sensor data is present, parse the data
         if hasattr(raw_extras, api_sensor_name):
