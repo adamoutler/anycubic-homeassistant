@@ -1,20 +1,6 @@
 # Loads default set of integrations. Do not remove.
 
-config:
-counter:
-dhcp:
-frontend:
-map:
-my:
-sun:
-script:
-ssdp:
-tag:
-timer:
-usb:
-webhook:
-zeroconf:
-zone:
+default_config:
 
 homeassistant:
   auth_providers:
