@@ -68,10 +68,14 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_DHCP: True,
             }
             try:
-                self.async_step_duplicates(discovered_information)
+                configured: bool = await self.async_step_duplicates(
+                    discovered_information
+                )
                 # Before adding the device, we pass it into the user
                 # confirmation step.
-                return await self.async_step_user()
+                if configured:
+                    return await self.async_step_user()
+                return False
             except ValueError:
                 # Don't spam the logs because this device just came back online
                 # and we already have a config entry for it.
@@ -84,7 +88,9 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         we show the user the device information and ask if it is correct."""
         if user_input is not None and not hasattr(user_input, CONF_DHCP):
             try:
-                await self.async_step_duplicates(user_input)
+                configured: bool = await self.async_step_duplicates(user_input)
+                if not configured:
+                    return self.async_abort(reason="duplicate_detection")
                 return await self.async_step_finish(user_input)
             except ValueError:
                 user_input["errors"] = ["connection_error"]
@@ -98,9 +104,11 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             else None,
         )
 
-    async def async_step_duplicates(self, device: dict) -> None:
+    async def async_step_duplicates(self, device: dict) -> bool:
         """Prepare configuration for a discovered Anycubic device. Before continuing,
-        we check if the serial number is already registered to a device."""
+        we check if the serial number is already registered to a device.
+        :param device: The device dictionary from the discovery event.
+        :return: True if the device is configured, False if not."""
         # Abort if serial is configured
         self._add_device_info_to_device(device)
         await self.async_set_unique_id(device[CONF_SERIAL])
@@ -118,7 +126,9 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_HOST: device[CONF_HOST],
                     },
                 )
-            self.async_abort(reason="already_configured")
+                self.async_abort(reason="already_configured")
+                return False  # Already configured
+        return True
 
     def _add_device_info_to_device(self, device):
         adapter = MonoXAPIAdapter(device[CONF_HOST])
