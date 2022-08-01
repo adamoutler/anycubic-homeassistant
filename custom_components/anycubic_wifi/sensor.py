@@ -117,6 +117,7 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
         entry: ConfigEntry,
         native_update: str,
         name: str,
+        unit: str = None,
     ) -> None:
         """Initialize the sensor.
         :coordinator: The data retrieval and storage for this sensor.
@@ -126,6 +127,8 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
         super().__init__(entry=entry, bridge=bridge, name=name)
         self.hass = hass
         self.native_update = native_update
+        if unit is not None:
+            self._attr_unit_of_measurement = unit
 
     @property
     def state(self):
@@ -176,6 +179,13 @@ class MonoXExtraSensor(MonoXSensor):
         if self.sensor_attr_name in extras:
             return extras[self.sensor_attr_name]
         return None
+
+    @property
+    def state(self):
+        """Return sensor state. Since this value is not processed, and delivered
+        directly to the sensor, it is considered a native value.  This can be
+        overridden by home assistant user to provide a custom value."""
+        return self.native_value
 
     @property
     def available(self) -> bool:
