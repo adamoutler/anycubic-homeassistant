@@ -124,7 +124,7 @@ class MonoXSensor(AnycubicEntityBaseDecorator, SensorEntity):
         :hass: A reference to Home Assistant.
         :entry: This device's configuration data.
         """
-        super().__init__(entry=entry, bridge=bridge, name=name)
+        super().__init__(entry=entry, bridge=bridge, sensor_generic_name=name)
         self.hass = hass
         self.native_update = native_update
         if unit is not None:
