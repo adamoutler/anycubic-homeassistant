@@ -111,7 +111,10 @@ class MyConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         :return: True if the device is configured, False if not."""
         # Abort if serial is configured
         self._add_device_info_to_device(device)
+        if CONF_SERIAL not in device:
+            self.async_abort(reason="not_enough_data")
         await self.async_set_unique_id(device[CONF_SERIAL])
+
         self._abort_if_unique_id_configured(
             updates={CONF_HOST: device[CONF_HOST]}
         )
