@@ -23,20 +23,24 @@ class AnycubicEntityBaseDecorator(
     """Base common to all MonoX entities."""
 
     def __init__(
-        self, entry: ConfigEntry, bridge: AnycubicDataBridge, name: str
+        self,
+        entry: ConfigEntry,
+        bridge: AnycubicDataBridge,
+        sensor_generic_name: str,
     ) -> None:
         """Initialize the base MonoX entity object.
         :param entry: the configuration data.
         :param coordinator: the processing and storage of updates.
-        :param name: the name of the sensor.
+        :param sensor_generic_name: the name of the sensor EG status or layers.
         """
         self.entry = entry
         # Make it shorter to prevent elipses when displayed in UI.
         # Instead of "Photon Mono X 6K Status", use "Mono X 6K Status"
+        # https://developers.home-assistant.io/blog/2022/07/10/entity_naming/
         model = entry.data[CONF_MODEL].replace("Photon ", "")
-        self.sensor_attr_name = name
-        self._attr_name = model + " " + name
-        self._attr_unique_id = self.entry.entry_id + name
+        self.sensor_attr_name = sensor_generic_name
+        self._attr_name = model + " " + sensor_generic_name
+        self._attr_unique_id = self.entry.entry_id + sensor_generic_name
         self.bridge = bridge
         super().__init__(bridge)
 
