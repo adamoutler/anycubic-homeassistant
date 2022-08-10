@@ -95,7 +95,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.async_on_unload(entry.add_update_listener(opt_update_listener))
 
     # Setup the sensors.
-    await hass.config_entries.async_forward_entry_setup(entry, PLATFORMS)
+    try:
+        await hass.config_entries.async_forward_entry_setup(entry, PLATFORMS)
+    except TypeError:
+        _LOGGER.warning("Failed to setup Anycubic Printer %s", entry.entry_id)
+        return False
     return True
 
 
@@ -127,7 +131,10 @@ async def opt_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     # find and remove the device from the registry
     registry: DeviceRegistry = hass.data["device_registry"]
     device = registry.async_get_device(identifiers=[(DOMAIN, entry.unique_id)])
-    registry.async_remove_device(device.id)
+    try:
+        registry.async_remove_device(device.id)
+    except AttributeError:
+        pass
     # setup the device again
     await async_setup_entry(hass, entry)
     await hass.config_entries.async_reload(entry.entry_id)

@@ -69,23 +69,16 @@ class MonoXAPIAdapter(UartWifi):
         Returns
         :returns (Union[MonoXStatus, dict] | bool): MonoXStatus, and a dict of
         extras, or a False."""
-        try:
-            _LOGGER.debug("Collecting Status")
-            respone_stream = self.send_request("getstatus,\r\n")
-            status: MonoXStatus = _find_response_of_type(
-                response=respone_stream, expected_type=MonoXStatus
-            )
-            if status:
-                extras = {}
-                if not no_extras:
-                    extras = _parse_extras(status, convert_seconds)
-                return (status, extras)
-        finally:
-            # We close the telnet socket here because the device has limited
-            # connections and broadcasts to all of them.  If the device has
-            # open conections, the responses are slower and we may not
-            # be the only ones using the device currently.
-            self.telnet_socket.close()
+        _LOGGER.debug("Collecting Status")
+        respone_stream = self.send_request("getstatus,\r\n")
+        status: MonoXStatus = _find_response_of_type(
+            response=respone_stream, expected_type=MonoXStatus
+        )
+        if status:
+            extras = {}
+            if not no_extras:
+                extras = _parse_extras(status, convert_seconds)
+            return (status, extras)
         return (False, False)
 
     def sysinfo(self) -> MonoXSysInfo | bool:
@@ -100,8 +93,6 @@ class MonoXAPIAdapter(UartWifi):
             )
         except (OSError, RuntimeError) as ex:
             raise AnycubicException from ex
-        finally:
-            self.telnet_socket.close()
 
 
 def _find_response_of_type(
