@@ -92,14 +92,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await bridge.async_config_entry_first_refresh()
     entry_location["coordinator"] = bridge
 
+    # Setup the sensors.
+    for platform in PLATFORMS:
+        try:
+            hass.async_create_task(
+                hass.config_entries.async_forward_entry_setup(entry, platform)
+            )
+        except TypeError as ex:
+            raise ConfigEntryNotReady
+
     # Setup options listener.
     entry.async_on_unload(entry.add_update_listener(opt_update_listener))
-
-    # Setup the sensors.
-    try:
-        await hass.config_entries.async_forward_entry_setup(entry, PLATFORMS)
-    except TypeError:
-        raise ConfigEntryNotReady
     return True
 
 
