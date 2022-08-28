@@ -27,6 +27,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.device_registry import DeviceRegistry
+from homeassistant.config_entries import ConfigEntryNotReady
 
 from .data_bridge import AnycubicDataBridge
 from .adapter_fascade import MonoXAPIAdapter
@@ -98,8 +99,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         await hass.config_entries.async_forward_entry_setup(entry, PLATFORMS)
     except TypeError:
-        _LOGGER.warning("Failed to setup Anycubic Printer %s", entry.entry_id)
-        return False
+        raise ConfigEntryNotReady
     return True
 
 
