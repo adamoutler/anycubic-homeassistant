@@ -189,7 +189,6 @@ class AnycubicDataBridge(DataUpdateCoordinator):
                 manufacturer=ATTR_MANUFACTURER,
                 suggested_area=SUGGESTED_AREA,
                 sw_version=self.config_entry.data[ATTR_SW_VERSION],
-                supported_features=self._monox.ip_address,
                 model=self.config_entry.data[CONF_MODEL],
                 name=ATTR_MANUFACTURER
                 + " "
