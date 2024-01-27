@@ -3,10 +3,13 @@
     provides access to the Anycubic data bridge, and by integrating with the
     Coordinator component, provides a standard way to handle the data update
     procedure."""
+from functools import cached_property
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.const import CONF_HOST, CONF_MODEL
+
 from .const import (
     OPT_HIDE_EXTRA_SENSORS,
     OPT_HIDE_IP,
@@ -70,8 +73,8 @@ class AnycubicEntityBaseDecorator(
         :return: True if the sensor is available, False otherwise."""
         return hasattr(self.bridge.data, "status")
 
-    @property
-    def _attr_assumed_state(self) -> bool:
+    @cached_property
+    def assumed_state(self) -> bool:
         """Return if entity is assumed state. In the event the sensor is not
         available, the status is assumed as unchanged until the sensor is
         determined to be offline or available. This will cause the sensor to
@@ -80,8 +83,8 @@ class AnycubicEntityBaseDecorator(
         :return: True if the sensor is assumed state, False otherwise."""
         return self.bridge.assumed_state
 
-    @property
-    def _attr_entity_picture(self) -> str:
+    @cached_property
+    def entity_picture(self) -> str | None:
         """Return the entity picture. If this is a MonoX, we return a picture
         of the Mono X style printer.  While slight variances exist in the X,
         4K, and 6K printers, the Entity Picture is 100x100 pixels, and
