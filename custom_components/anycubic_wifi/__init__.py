@@ -70,38 +70,55 @@ async def async_setup(hass: HomeAssistant, _: ConfigType) -> bool:
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Anycubic Printer from a config entry. This is where individual
-        entries are setup. Start by setting up data location and polling time
-        deltas, and then establish the data bridge to the 3D printer. The first
-        data refresh action occurs, then the sensors are setup.
-    :param hass: HomeAssistant api reference to all of the Home Assistant data.
-    :param entry: The config entry to setup.
-    :returns: True if the setup was successful. This will always be successful
-        barring problems with Home Assistant or the underlying APIs. In the
-        event a communication-type excepiton occurs, Home Assistant will
-        declare this entry unable to be setup, requiring a reconfiguration or
-        restart to bring us back online."""
-    # setup the basic datastructure in hass.
+    """
+    Integrate an Anycubic printer into Home Assistant.
 
-    entry_location = hass.data[DOMAIN].setdefault(entry.entry_id, {})
+    * Creates a DataUpdateCoordinator (`bridge`) that polls the printer.
+    * Stores the coordinator in `hass.data[DOMAIN][entry_id]`.
+    * **Forwards** the entry to every platform listed in `PLATFORMS`
+      **once**, using `hass.config_entries.async_forward_entry_setups`.
+      This helper is the modern, batched replacement for
+      `async_forward_entry_setup` and will be mandatory after HA 2025.6.
 
-    # setup the data bridge.
-    poll_delta = timedelta(seconds=POLL_INTERVAL)
-    entry_location[CONF_SCAN_INTERVAL] = poll_delta
-    bridge = get_new_data_bridge(hass, entry)
-    await bridge.async_config_entry_first_refresh()
-    entry_location["coordinator"] = bridge
+    Returns
+    -------
+    bool
+        True when initialization was successful and all platforms loaded.
 
-    # Setup the sensors.
-    for platform in PLATFORMS:
-        try:
-            hass.async_create_task(
-                hass.config_entries.async_forward_entry_setup(entry, platform)
-            )
-        except TypeError:
-            raise ConfigEntryNotReady
+    Raises
+    ------
+    ConfigEntryNotReady
+        When the printer is unreachable (network down, bad auth, etc.).
+    """
 
-    # Setup options listener.
+    try:
+        bridge = get_new_data_bridge(hass, entry)
+        await bridge.async_config_entry_first_refresh()
+
+    except OSError as err:            # Printer offline / DNS failure / etc.
+        _LOGGER.warning(
+            "Printer %s is unreachable: %s; will retry", entry.title, err
+        )
+        raise ConfigEntryNotReady from err
+
+    except AuthenticationError as err:
+        _LOGGER.error(
+            "Authentication failed for %s: %s; user action required",
+            entry.title,
+            err,
+        )
+        return False                  # hard failure – don’t retry automatically
+
+    # Any **unexpected** exception should bubble up so HA prints a full
+    # stack-trace in the log and marks the integration as failed.
+
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
+        CONF_SCAN_INTERVAL: timedelta(seconds=POLL_INTERVAL),
+        "coordinator": bridge,
+    }
+
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
     entry.async_on_unload(entry.add_update_listener(opt_update_listener))
     return True
 
