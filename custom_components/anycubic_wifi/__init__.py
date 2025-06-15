@@ -81,27 +81,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         event a communication-type excepiton occurs, Home Assistant will
         declare this entry unable to be setup, requiring a reconfiguration or
         restart to bring us back online."""
-    # setup the basic datastructure in hass.
-
+    # Prepare storage in hass.data
     entry_location = hass.data[DOMAIN].setdefault(entry.entry_id, {})
 
-    # setup the data bridge.
+    # Setup the data bridge
     poll_delta = timedelta(seconds=POLL_INTERVAL)
     entry_location[CONF_SCAN_INTERVAL] = poll_delta
+
+    # Initialize and refresh data bridge
     bridge = get_new_data_bridge(hass, entry)
     await bridge.async_config_entry_first_refresh()
     entry_location["coordinator"] = bridge
 
-    # Setup the sensors.
-    for platform in PLATFORMS:
-        try:
-            hass.async_create_task(
-                hass.config_entries.async_forward_entry_setup(entry, platform)
-            )
-        except TypeError:
-            raise ConfigEntryNotReady
+    # Forward platforms in batch (preferred over async_forward_entry_setup loop)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Setup options listener.
+    # Setup options listener
     entry.async_on_unload(entry.add_update_listener(opt_update_listener))
     return True
 
