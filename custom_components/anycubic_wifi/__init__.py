@@ -6,7 +6,7 @@ rendered by the sensor entity.
 The init.py file is the entry point for the integration. It is responsible for
 creating the integration representation in hass.data.
 """
-# pylint disable=anomalous-backslash-in-string
+# pylint: disable=anomalous-backslash-in-string
 
 # The overall project layout is as follows:
 #             Init Config Entry
@@ -78,7 +78,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     :param entry: The config entry to setup.
     :returns: True if the setup was successful. This will always be successful
         barring problems with Home Assistant or the underlying APIs. In the
-        event a communication-type excepiton occurs, Home Assistant will
+        event a communication-type exception occurs, Home Assistant will
         declare this entry unable to be setup, requiring a reconfiguration or
         restart to bring us back online."""
     # setup the basic datastructure in hass.
@@ -93,10 +93,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry_location["coordinator"] = bridge
 
     # Setup the platforms.
-    try:
-        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    except TypeError as err:
-        raise ConfigEntryNotReady from err
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     # Setup options listener.
     entry.async_on_unload(entry.add_update_listener(opt_update_listener))
@@ -135,9 +132,7 @@ async def opt_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     except AttributeError:
         pass
     # setup the device again
-    await async_setup_entry(hass, entry)
     await hass.config_entries.async_reload(entry.entry_id)
-
 
 def get_existing_bridge(
     hass: HomeAssistant, entry: ConfigEntry
