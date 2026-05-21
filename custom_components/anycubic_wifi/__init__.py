@@ -6,7 +6,7 @@ rendered by the sensor entity.
 The init.py file is the entry point for the integration. It is responsible for
 creating the integration representation in hass.data.
 """
-# pylint disable=anomalous-backslash-in-string
+# pylint: disable=anomalous-backslash-in-string
 
 # The overall project layout is as follows:
 #             Init Config Entry
@@ -78,28 +78,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     :param entry: The config entry to setup.
     :returns: True if the setup was successful. This will always be successful
         barring problems with Home Assistant or the underlying APIs. In the
-        event a communication-type excepiton occurs, Home Assistant will
+        event a communication-type exception occurs, Home Assistant will
         declare this entry unable to be setup, requiring a reconfiguration or
         restart to bring us back online."""
-    # Prepare storage in hass.data
+    # setup the basic datastructure in hass.
+
     entry_location = hass.data[DOMAIN].setdefault(entry.entry_id, {})
 
-    # Store polling interval
+    # setup the data bridge.
     poll_delta = timedelta(seconds=POLL_INTERVAL)
     entry_location[CONF_SCAN_INTERVAL] = poll_delta
-
-    # Initialize and refresh data bridge
     bridge = get_new_data_bridge(hass, entry)
     await bridge.async_config_entry_first_refresh()
     entry_location["coordinator"] = bridge
 
-    # Forward platforms in batch (preferred over async_forward_entry_setup loop)
+    # Setup the platforms.
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Listen for option updates
+    # Setup options listener.
     entry.async_on_unload(entry.add_update_listener(opt_update_listener))
     return True
-
 
 def get_new_data_bridge(hass, entry) -> AnycubicDataBridge:
     """Get the data bridge for the given config entry.  The data bridge is
@@ -134,9 +132,7 @@ async def opt_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     except AttributeError:
         pass
     # setup the device again
-    await async_setup_entry(hass, entry)
     await hass.config_entries.async_reload(entry.entry_id)
-
 
 def get_existing_bridge(
     hass: HomeAssistant, entry: ConfigEntry
